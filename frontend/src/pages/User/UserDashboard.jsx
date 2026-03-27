@@ -16,7 +16,7 @@ export default function UserDashboard() {
 
         // 🔹 Fetch stats
         const statsRes = await fetch(
-          "http://13.126.8.6:5000/api/v1/complaint/user/stats",
+          "/api/v1/complaint/user/stats",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -28,7 +28,7 @@ export default function UserDashboard() {
 
         // 🔹 Fetch user complaints
         const complaintsRes = await fetch(
-          "http://13.126.8.6:5000/api/v1/complaint/my/complaints",
+          "/api/v1/complaint/my/complaints",
           {
             headers: {
               Authorization: `Bearer ${token}`,
