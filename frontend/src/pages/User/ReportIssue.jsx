@@ -37,7 +37,7 @@ export default function ReportIssue() {
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-        "http://localhost:5000/api/v1/complaint/create",
+        "http://13.126.8.6:5000/api/v1/complaint/create",
         {
           method: "POST",
           headers: {
@@ -305,7 +305,7 @@ export default function ReportIssue() {
                           formData.append("image", selectedFile);
 
                           // 👉 CALL YOUR ML API
-                          const res = await fetch("http://localhost:5000/api/v1/classify", {
+                          const res = await fetch("http://13.126.8.6:5000/api/v1/classify", {
                             method: "POST",
                             body: formData,
                           });

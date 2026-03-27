@@ -15,7 +15,7 @@ export default function MyReports() {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        "http://localhost:5000/api/v1/complaint/my/complaints",
+        "http://13.126.8.6:5000/api/v1/complaint/my/complaints",
         {
           headers: {
             Authorization: `Bearer ${token}`,

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
-const API = "http://localhost:5000/api/v1";
+const API = "http://13.126.8.6:5000/api/v1";
 const getToken = () => localStorage.getItem("token");
 const authHeaders = () => ({ Authorization: `Bearer ${getToken()}` });
 const jsonHeaders = () => ({ ...authHeaders(), "Content-Type": "application/json" });

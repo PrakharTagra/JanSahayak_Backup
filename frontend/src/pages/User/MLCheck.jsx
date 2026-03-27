@@ -26,7 +26,7 @@ export default function MLTester() {
     try {
       setLoading(true);
 
-      const response = await fetch("http://localhost:5000/api/v1/classify", {
+      const response = await fetch("http://13.126.8.6:5000/api/v1/classify", {
         method: "POST",
         body: formData,
       });
