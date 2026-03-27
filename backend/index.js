@@ -23,11 +23,11 @@ app.use(express.json());
 app.use(cookieParser());
 
 // routes
-app.use("/api/v1/auth", require("./routes/auth"));
-app.use("/api/v1/complaint", require("./routes/complaint"));
-app.use("/api/v1/volunteer", require("./routes/volunteer"));
-app.use("/api/v1/government", require("./routes/government"));
-app.use("/api/v1/classify", require("./routes/classify"));
+app.use("https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/auth", require("./routes/auth"));
+app.use("https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/complaint", require("./routes/complaint"));
+app.use("https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/volunteer", require("./routes/volunteer"));
+app.use("https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/government", require("./routes/government"));
+app.use("https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/classify", require("./routes/classify"));
 
 // default route
 app.get("/", (req, res) => {

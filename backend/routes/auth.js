@@ -15,7 +15,7 @@ const { isAuthenticated } = require("../middlewares/auth");
 // ── Public routes (no auth required) ──────────────────────
 router.post("/signup",               signup);
 router.post("/login",                login);
-router.get("/verify-email",          verifyEmail);          // GET /api/v1/auth/verify-email?token=...
+router.get("/verify-email",          verifyEmail);          // GET https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/auth/verify-email?token=...
 router.post("/resend-verification",  resendVerification);   // POST with { email }
 router.post("/reset-password",       resetPassword);
 

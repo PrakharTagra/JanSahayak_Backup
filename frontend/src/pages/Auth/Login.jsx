@@ -52,7 +52,7 @@ export function Login() {
       return;
     }
     try {
-      const res = await fetch("/api/v1/auth/login", {
+      const res = await fetch("https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, role }),

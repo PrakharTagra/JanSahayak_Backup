@@ -15,7 +15,7 @@ export default function MyReports() {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        "/api/v1/complaint/my/complaints",
+        "https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/complaint/my/complaints",
         {
           headers: {
             Authorization: `Bearer ${token}`,

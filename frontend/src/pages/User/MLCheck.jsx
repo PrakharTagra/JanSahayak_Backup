@@ -26,7 +26,7 @@ export default function MLTester() {
     try {
       setLoading(true);
 
-      const response = await fetch("/api/v1/classify", {
+      const response = await fetch("https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/classify", {
         method: "POST",
         body: formData,
       });

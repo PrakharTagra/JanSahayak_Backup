@@ -16,7 +16,7 @@ export default function UserDashboard() {
 
         // 🔹 Fetch stats
         const statsRes = await fetch(
-          "/api/v1/complaint/user/stats",
+          "https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/complaint/user/stats",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -28,7 +28,7 @@ export default function UserDashboard() {
 
         // 🔹 Fetch user complaints
         const complaintsRes = await fetch(
-          "/api/v1/complaint/my/complaints",
+          "https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/complaint/my/complaints",
           {
             headers: {
               Authorization: `Bearer ${token}`,

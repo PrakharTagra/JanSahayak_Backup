@@ -21,7 +21,7 @@ export function VerifyEmail() {
     (async () => {
       try {
         const res = await fetch(
-          `/api/v1/auth/verify-email?token=${token}`
+          `https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/auth/verify-email?token=${token}`
         );
         const data = await res.json();
 

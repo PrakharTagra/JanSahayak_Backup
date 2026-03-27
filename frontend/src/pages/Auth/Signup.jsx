@@ -23,7 +23,7 @@ export function Signup() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/v1/auth/signup", {
+      const res = await fetch("https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
@@ -45,7 +45,7 @@ export function Signup() {
 
   const handleResend = async () => {
     try {
-      const res = await fetch("/api/v1/auth/resend-verification", {
+      const res = await fetch("https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/auth/resend-verification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

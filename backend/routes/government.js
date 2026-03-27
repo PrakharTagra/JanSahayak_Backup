@@ -49,15 +49,15 @@ router.post("/login", governmentLogin);
 router.get("/profile", isAuthenticated, isGovernment, getGovernmentProfile);
 
 // ← CHANGED: was /dashboard → now /stats
-// dashboard calls GET /api/v1/government/stats
+// dashboard calls GET https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/government/stats
 router.get("/stats", isAuthenticated, isGovernment, getDashboardStats);
 
 // ← CHANGED: was /complaints → now /complaints/all
-// dashboard calls GET /api/v1/government/complaints/all
+// dashboard calls GET https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/government/complaints/all
 router.get("/complaints/all", isAuthenticated, isGovernment, getAllComplaints);
 
 // ← ADDED: volunteers list for AssignTask page
-// dashboard calls GET /api/v1/government/volunteers/all
+// dashboard calls GET https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/government/volunteers/all
 router.get("/volunteers/all", isAuthenticated, isGovernment, getAllVolunteers);
 
 // these two were correct, keeping as-is
