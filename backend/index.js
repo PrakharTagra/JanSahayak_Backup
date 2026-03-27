@@ -54,13 +54,16 @@ const PORT = process.env.PORT || 4000;
 database.connect();
 
 app.use(cors({
-  origin: "*",
+  origin: "https://jansahayak-rho.vercel.app",  // ✅ specific origin, not "*"
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
 
-app.options("*", cors());   // ⭐ IMPORTANT
+app.options("*", cors({
+  origin: "https://jansahayak-rho.vercel.app",  // ✅ same here
+  credentials: true
+}));
 
 // middlewares
 app.use(express.json());
