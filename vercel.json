@@ -1,12 +1,8 @@
 {
-  "routes": [
+  "rewrites": [
     {
-      "src": "^/api/(.*)",
-      "dest": "https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
