@@ -211,7 +211,7 @@ export default function Feed() {
   // ✅ fetch user's existing bids on mount so applied state persists on refresh
   useEffect(() => {
     if (!isVolunteer) return;
-    fetch("https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/volunteer/my-bids", {
+    fetch(`${import.meta.env.VITE_API_URL}/api/v1/volunteer/my-bids`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(r => r.json())
@@ -228,7 +228,7 @@ export default function Feed() {
   const fetchComplaints = async () => {
     try {
       setLoading(true);
-      const res  = await fetch("https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/complaint/all", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/complaint/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -249,7 +249,7 @@ export default function Feed() {
 
   const handleUpvote = async (complaintId) => {
     try {
-      const res  = await fetch(`https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/complaint/${complaintId}/upvote`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/complaint/${complaintId}/upvote`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       });
@@ -275,7 +275,7 @@ export default function Feed() {
       });
       if (payload.selfieFile) formData.append("selfie", payload.selfieFile);
 
-      const res  = await fetch("https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/volunteer/apply", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/volunteer/apply`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,

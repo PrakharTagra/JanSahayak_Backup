@@ -15,9 +15,7 @@ export default function UserDashboard() {
         const token = localStorage.getItem("token");
 
         // 🔹 Fetch stats
-        const statsRes = await fetch(
-          "https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/complaint/user/stats",
-          {
+        const statsRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/complaint/user/stats`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -27,9 +25,7 @@ export default function UserDashboard() {
         const statsData = await statsRes.json();
 
         // 🔹 Fetch user complaints
-        const complaintsRes = await fetch(
-          "https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/complaint/my/complaints",
-          {
+        const complaintsRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/complaint/my/complaints`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },

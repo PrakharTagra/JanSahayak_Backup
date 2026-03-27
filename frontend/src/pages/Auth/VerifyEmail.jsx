@@ -21,7 +21,7 @@ export function VerifyEmail() {
     (async () => {
       try {
         const res = await fetch(
-          `https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/auth/verify-email?token=${token}`
+          `import.meta.env.VITE_API_URL/api/v1/auth/verify-email?token=${token}`
         );
         const data = await res.json();
 

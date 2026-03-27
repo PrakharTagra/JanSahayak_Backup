@@ -9,7 +9,6 @@ import UserDashboard from "./pages/User/UserDashboard";
 import Feed from "./pages/User/Feed";
 import AuthorityDashboard from "./pages/Authority/AuthorityDashboard";
 import VolunteerForm from "./pages/User/VolunteerForm";
-import ML from "./pages/User/MLCheck"
 import { VerifyEmail } from "./pages/Auth/VerifyEmail";
 function App() {
   return (
@@ -24,7 +23,6 @@ function App() {
       <Route path="/user/volunteerform" element={<VolunteerForm/>}/>
       <Route path="/authoritydashboard" element={<AuthorityDashboard/>}/>
       <Route path="/verify-email" element={<VerifyEmail />} />
-      <Route path="/ml" element={<ML />} />
     </Routes>
   );
 }

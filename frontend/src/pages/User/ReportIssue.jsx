@@ -36,9 +36,7 @@ export default function ReportIssue() {
 
       const token = localStorage.getItem("token");
 
-      const response = await fetch(
-        "https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/complaint/create",
-        {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/complaint/create`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -305,7 +303,7 @@ export default function ReportIssue() {
                           formData.append("image", selectedFile);
 
                           // 👉 CALL YOUR ML API
-                          const res = await fetch("https://candelaria-uninsinuative-obstructedly.ngrok-free.dev/api/v1/classify", {
+                          const res = await fetch("import.meta.env.VITE_API_URL/api/v1/classify", {
                             method: "POST",
                             body: formData,
                           });
