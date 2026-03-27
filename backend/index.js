@@ -36,9 +36,6 @@ app.get("/", (req, res) => {
         message: "Your app is running successfully",
     });
 });
-console.log("CLOUD_NAME:", process.env.CLOUDINARY_CLOUD_NAME);
-console.log("API_KEY:", process.env.CLOUDINARY_API_KEY);
-console.log("API_SECRET:", process.env.CLOUDINARY_API_SECRET);
 app.listen(PORT, () => {
     console.log(`Your server is up and running on PORT NUMBER ${PORT}`);
 });
