@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/user.js");
-const Government = require("../models/Government");
+const Government = require("../models/government");
 const dotenv = require("dotenv");
 dotenv.config();
 
