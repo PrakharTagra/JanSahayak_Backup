@@ -1963,59 +1963,139 @@ export default function ReportIssue() {
   };
 
   // ── Handle file selection & AI analysis ─────────────────────────────────
+  // const handleFileChange = async (e) => {
+  //   const selectedFile = e.target.files[0];
+  //   if (!selectedFile) return;
+
+  //   setFile(selectedFile);
+  //   setLocationAutoFilled(false);
+  //   setImageAnalyzed(false);
+  //   setCategory("");
+  //   setLocation("");
+
+  //   // Preview
+  //   const previewURL = URL.createObjectURL(selectedFile);
+  //   setFilePreview(previewURL);
+
+  //   try {
+  //     setLoadingAI(true);
+
+  //     const [gpsResult, classifyData] = await Promise.all([
+  //       extractGPS(selectedFile),
+  //       (async () => {
+  //         const fd = new FormData();
+  //         fd.append("image", selectedFile);
+  //         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/classify`, {
+  //           method: "POST", body: fd,
+  //         });
+  //         const text = await res.text();
+  //         try { return JSON.parse(text); }
+  //         catch { throw new Error("Invalid JSON from server"); }
+  //       })(),
+  //     ]);
+
+  //     if (gpsResult) {
+  //       const { lat, lon } = gpsResult;
+  //       const geoRes = await fetch(
+  //         `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
+  //         { headers: { "Accept-Language": "en" } }
+  //       );
+  //       const geoData = await geoRes.json();
+  //       if (geoData?.display_name) {
+  //         setLocation(geoData.display_name);
+  //         setLocationAutoFilled(true);
+  //       }
+  //     }
+
+  //     setCategory(classifyData.category);
+  //     setImageAnalyzed(true);
+  //   } catch (err) {
+  //     console.error("Error:", err);
+  //     alert("Image processing failed");
+  //   } finally {
+  //     setLoadingAI(false);
+  //   }
+  // };
   const handleFileChange = async (e) => {
-    const selectedFile = e.target.files[0];
-    if (!selectedFile) return;
+  const selectedFile = e.target.files[0];
+  if (!selectedFile) return;
 
-    setFile(selectedFile);
-    setLocationAutoFilled(false);
-    setImageAnalyzed(false);
-    setCategory("");
-    setLocation("");
+  setFile(selectedFile);
+  setLocationAutoFilled(false);
+  setImageAnalyzed(false);
+  setCategory("");
+  setLocation("");
 
-    // Preview
-    const previewURL = URL.createObjectURL(selectedFile);
-    setFilePreview(previewURL);
+  const previewURL = URL.createObjectURL(selectedFile);
+  setFilePreview(previewURL);
 
-    try {
-      setLoadingAI(true);
+  try {
+    setLoadingAI(true);
 
-      const [gpsResult, classifyData] = await Promise.all([
-        extractGPS(selectedFile),
-        (async () => {
-          const fd = new FormData();
-          fd.append("image", selectedFile);
-          const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/classify`, {
-            method: "POST", body: fd,
-          });
-          const text = await res.text();
-          try { return JSON.parse(text); }
-          catch { throw new Error("Invalid JSON from server"); }
-        })(),
-      ]);
+    const [gpsResult, classifyData] = await Promise.all([
+      extractGPS(selectedFile),
+      (async () => {
+        const fd = new FormData();
+        fd.append("image", selectedFile);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/classify`, {
+          method: "POST", body: fd,
+        });
+        const text = await res.text();
+        try { return JSON.parse(text); }
+        catch { throw new Error("Invalid JSON from server"); }
+      })(),
+    ]);
 
-      if (gpsResult) {
-        const { lat, lon } = gpsResult;
-        const geoRes = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
-          { headers: { "Accept-Language": "en" } }
-        );
-        const geoData = await geoRes.json();
-        if (geoData?.display_name) {
-          setLocation(geoData.display_name);
-          setLocationAutoFilled(true);
-        }
+    if (gpsResult) {
+      // ── EXIF GPS found in image ──
+      const { lat, lon } = gpsResult;
+      const geoRes = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
+        { headers: { "Accept-Language": "en" } }
+      );
+      const geoData = await geoRes.json();
+      if (geoData?.display_name) {
+        setLocation(geoData.display_name);
+        setLocationAutoFilled(true);
       }
-
-      setCategory(classifyData.category);
-      setImageAnalyzed(true);
-    } catch (err) {
-      console.error("Error:", err);
-      alert("Image processing failed");
-    } finally {
-      setLoadingAI(false);
+    } else {
+      // ── No EXIF GPS — fallback to device GPS ──
+      await new Promise((resolve) => {
+        if (!navigator.geolocation) return resolve();
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            try {
+              const { latitude, longitude } = pos.coords;
+              const geoRes = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+                { headers: { "Accept-Language": "en" } }
+              );
+              const geoData = await geoRes.json();
+              if (geoData?.display_name) {
+                setLocation(geoData.display_name);
+                setLocationAutoFilled(true);
+              }
+            } catch {
+              // silently fail — user can type manually
+            } finally {
+              resolve();
+            }
+          },
+          () => resolve(), // user denied GPS — silently fail
+          { timeout: 8000, maximumAge: 60000 }
+        );
+      });
     }
-  };
+
+    setCategory(classifyData.category);
+    setImageAnalyzed(true);
+  } catch (err) {
+    console.error("Error:", err);
+    alert("Image processing failed");
+  } finally {
+    setLoadingAI(false);
+  }
+};
 
   // ── Success Screen ───────────────────────────────────────────────────────
   if (submitted) {
