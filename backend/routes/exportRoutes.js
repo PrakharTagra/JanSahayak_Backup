@@ -8,8 +8,8 @@ const router  = express.Router();
 const ExcelJS = require("exceljs");
 
 // ── import your existing models ──────────────────────────────────────────────
-const User       = require("../models/user");           // matches your casing
-const Government = require("../models/government");     // authority model
+const User       = require("../models/user");
+const Government = require("../models/government");
 const Complaint  = require("../models/complaint");
 const Bid        = require("../models/Bid");
 
@@ -18,19 +18,19 @@ const { isAuthenticated, isGovernment } = require("../middleware/authMiddleware"
 
 // ── colour palette (matches JanSahayak amber/dark theme) ────────────────────
 const C = {
-  headerBg:    "FF1A2D4A",   // dark navy
-  headerFont:  "FFFFFFFF",   // white
-  subheaderBg: "FF0D1F3C",   // slightly lighter navy
-  amber:       "FFFF9933",   // JanSahayak amber
-  green:       "FF22C55E",
-  amber_light: "FFFFF3E0",
-  green_light: "FFF0FFF4",
-  red_light:   "FFFFF1F1",
-  blue_light:  "FFE6F1FB",
-  purple_light:"FFEEEDFE",
-  border:      "FFD1D5DB",
-  row_even:    "FFF8FAFC",
-  row_odd:     "FFFFFFFF",
+  headerBg:     "FF1A2D4A",
+  headerFont:   "FFFFFFFF",
+  subheaderBg:  "FF0D1F3C",
+  amber:        "FFFF9933",
+  green:        "FF22C55E",
+  amber_light:  "FFFFF3E0",
+  green_light:  "FFF0FFF4",
+  red_light:    "FFFFF1F1",
+  blue_light:   "FFE6F1FB",
+  purple_light: "FFEEEDFE",
+  border:       "FFD1D5DB",
+  row_even:     "FFF8FAFC",
+  row_odd:      "FFFFFFFF",
 };
 
 // ── helper: apply header row style ──────────────────────────────────────────
@@ -82,13 +82,15 @@ function setCols(sheet, cols) {
 // ── helper: status badge colour ─────────────────────────────────────────────
 function statusArgb(status) {
   const map = {
-    resolved: C.green_light,
-    assigned: C.blue_light,
-    pending:  C.amber_light,
-    active:   C.green_light,
-    busy:     C.amber_light,
-    available:C.green_light,
+    resolved:   C.green_light,
+    assigned:   C.blue_light,
+    pending:    C.amber_light,
+    active:     C.green_light,
+    busy:       C.amber_light,
+    available:  C.green_light,
     unverified: C.red_light,
+    accepted:   C.green_light,   // ✅ fixed
+    rejected:   C.red_light,     // ✅ fixed
   };
   return map[(status || "").toLowerCase()] || C.row_odd;
 }
@@ -102,11 +104,11 @@ router.get("/export", isAuthenticated, isGovernment, async (req, res) => {
 
     // ── 1. Fetch all data in parallel ────────────────────────────────────────
     const [users, complaints, bids] = await Promise.all([
-      User.find({}).lean(),   // citizens — your User model (not Government)
+      User.find({}).lean(),
 
       Complaint.find({})
-        .populate("postedBy",    "name email phone")
-        .populate("assignedTo",  "name email phone volunteerDetails")
+        .populate("postedBy",   "name email phone")
+        .populate("assignedTo", "name email phone volunteerDetails")
         .populate("approvedBid")
         .lean(),
 
@@ -116,7 +118,7 @@ router.get("/export", isAuthenticated, isGovernment, async (req, res) => {
         .lean(),
     ]);
 
-    // volunteers are Users with isVolunteer: true (matches your User model)
+    // volunteers are Users with isVolunteer: true
     const volunteers = await User.find({ isVolunteer: true }).lean();
 
     // ── 2. Build workbook ────────────────────────────────────────────────────
@@ -134,7 +136,7 @@ router.get("/export", isAuthenticated, isGovernment, async (req, res) => {
     });
 
     setCols(wsUsers, [
-      { key: "user_id",          header: "User ID",           width: 28 },
+      { key: "user_id",          header: "User ID",          width: 28 },
       { key: "full_name",        header: "Full Name",         width: 22 },
       { key: "email",            header: "Email",             width: 28 },
       { key: "email_verified",   header: "Email Verified",    width: 16 },
@@ -183,9 +185,10 @@ router.get("/export", isAuthenticated, isGovernment, async (req, res) => {
       });
       styleDataRow(row, i);
 
-      // highlight unverified users
       if (!u.isVerified) {
-        row.getCell("account_status").fill = { type: "pattern", pattern: "solid", fgColor: { argb: C.red_light } };
+        row.getCell("account_status").fill = {
+          type: "pattern", pattern: "solid", fgColor: { argb: C.red_light },
+        };
       }
     });
 
@@ -201,21 +204,21 @@ router.get("/export", isAuthenticated, isGovernment, async (req, res) => {
     });
 
     setCols(wsVols, [
-      { key: "volunteer_id",      header: "Volunteer ID",       width: 28 },
-      { key: "full_name",         header: "Full Name",          width: 22 },
-      { key: "email",             header: "Email",              width: 28 },
-      { key: "phone",             header: "Phone",              width: 16 },
-      { key: "skills",            header: "Skills",             width: 24 },
-      { key: "tasks_assigned",    header: "Tasks Assigned",     width: 16 },
-      { key: "tasks_completed",   header: "Tasks Completed",    width: 16 },
-      { key: "rating",            header: "Rating",             width: 10 },
-      { key: "is_available",      header: "Available?",         width: 12 },
-      { key: "bank_name",         header: "Bank Name",          width: 18 },
-      { key: "account_last4",     header: "Account (last 4)",   width: 16 },
-      { key: "ifsc",              header: "IFSC Code",          width: 16 },
-      { key: "account_holder",    header: "Account Holder",     width: 22 },
-      { key: "joined_on",         header: "Joined On",          width: 18 },
-      { key: "status",            header: "Status",             width: 14 },
+      { key: "volunteer_id",   header: "Volunteer ID",     width: 28 },
+      { key: "full_name",      header: "Full Name",        width: 22 },
+      { key: "email",          header: "Email",            width: 28 },
+      { key: "phone",          header: "Phone",            width: 16 },
+      { key: "skills",         header: "Skills",           width: 24 },
+      { key: "tasks_assigned", header: "Tasks Assigned",   width: 16 },
+      { key: "tasks_completed",header: "Tasks Completed",  width: 16 },
+      { key: "rating",         header: "Rating",           width: 10 },
+      { key: "is_available",   header: "Available?",       width: 12 },
+      { key: "bank_name",      header: "Bank Name",        width: 18 },
+      { key: "account_last4",  header: "Account (last 4)", width: 16 },
+      { key: "ifsc",           header: "IFSC Code",        width: 16 },
+      { key: "account_holder", header: "Account Holder",   width: 22 },
+      { key: "joined_on",      header: "Joined On",        width: 18 },
+      { key: "status",         header: "Status",           width: 14 },
     ]);
 
     styleHeader(wsVols.getRow(1));
@@ -228,13 +231,14 @@ router.get("/export", isAuthenticated, isGovernment, async (req, res) => {
       ])
     );
 
-    // grab bank details from their most recent approved bid
+    // grab bank details from their most recent ACCEPTED bid ✅ fixed
     const bankByVol = {};
     bids.forEach(b => {
-      if (b.status === "approved" && b.volunteer?._id) {
+      if (b.status === "accepted" && b.volunteer?._id) {
         bankByVol[b.volunteer._id.toString()] = b.bankDetails || {};
       }
     });
+
     // count bids per volunteer
     const bidsByVol = {};
     bids.forEach(b => {
@@ -267,8 +271,7 @@ router.get("/export", isAuthenticated, isGovernment, async (req, res) => {
       });
       styleDataRow(row, i);
 
-      const statusCell = row.getCell("status");
-      statusCell.fill = {
+      row.getCell("status").fill = {
         type: "pattern", pattern: "solid",
         fgColor: { argb: busy ? C.amber_light : C.green_light },
       };
@@ -286,22 +289,22 @@ router.get("/export", isAuthenticated, isGovernment, async (req, res) => {
     });
 
     setCols(wsComp, [
-      { key: "complaint_id",    header: "Complaint ID",      width: 28 },
-      { key: "title",           header: "Title",             width: 30 },
-      { key: "category",        header: "Category",          width: 16 },
-      { key: "description",     header: "Description",       width: 40 },
-      { key: "location",        header: "Location",          width: 24 },
-      { key: "photo_url",       header: "Photo URL",         width: 30 },
-      { key: "reported_by",     header: "Reported By",       width: 22 },
-      { key: "reporter_email",  header: "Reporter Email",    width: 28 },
-      { key: "reporter_phone",  header: "Reporter Phone",    width: 16 },
-      { key: "filed_on",        header: "Filed On",          width: 16 },
-      { key: "assigned_to",     header: "Assigned Volunteer",width: 22 },
-      { key: "vol_email",       header: "Volunteer Email",   width: 28 },
-      { key: "vol_phone",       header: "Volunteer Phone",   width: 16 },
-      { key: "status",          header: "Status",            width: 14 },
-      { key: "resolved_on",     header: "Resolved On",       width: 16 },
-      { key: "days_to_resolve", header: "Days to Resolve",   width: 16 },
+      { key: "complaint_id",   header: "Complaint ID",       width: 28 },
+      { key: "title",          header: "Title",              width: 30 },
+      { key: "category",       header: "Category",           width: 16 },
+      { key: "description",    header: "Description",        width: 40 },
+      { key: "location",       header: "Location",           width: 24 },
+      { key: "photo_url",      header: "Photo URL",          width: 30 },
+      { key: "reported_by",    header: "Reported By",        width: 22 },
+      { key: "reporter_email", header: "Reporter Email",     width: 28 },
+      { key: "reporter_phone", header: "Reporter Phone",     width: 16 },
+      { key: "filed_on",       header: "Filed On",           width: 16 },
+      { key: "assigned_to",    header: "Assigned Volunteer", width: 22 },
+      { key: "vol_email",      header: "Volunteer Email",    width: 28 },
+      { key: "vol_phone",      header: "Volunteer Phone",    width: 16 },
+      { key: "status",         header: "Status",             width: 14 },
+      { key: "resolved_on",    header: "Resolved On",        width: 16 },
+      { key: "days_to_resolve",header: "Days to Resolve",    width: 16 },
     ]);
 
     styleHeader(wsComp.getRow(1));
@@ -343,7 +346,6 @@ router.get("/export", isAuthenticated, isGovernment, async (req, res) => {
       });
       styleDataRow(row, i);
 
-      // colour status cell
       const statusCell = row.getCell("status");
       statusCell.fill = {
         type: "pattern", pattern: "solid",
@@ -364,22 +366,22 @@ router.get("/export", isAuthenticated, isGovernment, async (req, res) => {
     });
 
     setCols(wsBids, [
-      { key: "bid_id",          header: "Bid ID",            width: 28 },
-      { key: "complaint_id",    header: "Complaint ID",      width: 28 },
-      { key: "complaint_title", header: "Complaint Title",   width: 30 },
-      { key: "volunteer_id",    header: "Volunteer ID",      width: 28 },
-      { key: "volunteer_name",  header: "Volunteer Name",    width: 22 },
-      { key: "volunteer_email", header: "Volunteer Email",   width: 28 },
-      { key: "volunteer_phone", header: "Volunteer Phone",   width: 16 },
-      { key: "bid_amount",      header: "Bid Amount (₹)",    width: 16 },
-      { key: "est_days",        header: "Est. Days",         width: 12 },
-      { key: "score",           header: "Score (/100)",      width: 14 },
-      { key: "bank_name",       header: "Bank Name",         width: 18 },
-      { key: "account_last4",   header: "Account (last 4)",  width: 16 },
-      { key: "ifsc",            header: "IFSC Code",         width: 16 },
-      { key: "account_holder",  header: "Account Holder",    width: 22 },
-      { key: "selfie_url",      header: "Selfie URL",        width: 30 },
-      { key: "bid_status",      header: "Bid Status",        width: 14 },
+      { key: "bid_id",          header: "Bid ID",           width: 28 },
+      { key: "complaint_id",    header: "Complaint ID",     width: 28 },
+      { key: "complaint_title", header: "Complaint Title",  width: 30 },
+      { key: "volunteer_id",    header: "Volunteer ID",     width: 28 },
+      { key: "volunteer_name",  header: "Volunteer Name",   width: 22 },
+      { key: "volunteer_email", header: "Volunteer Email",  width: 28 },
+      { key: "volunteer_phone", header: "Volunteer Phone",  width: 16 },
+      { key: "bid_amount",      header: "Bid Amount (₹)",   width: 16 },
+      { key: "est_days",        header: "Est. Days",        width: 12 },
+      { key: "score",           header: "Score (/100)",     width: 14 },
+      { key: "bank_name",       header: "Bank Name",        width: 18 },
+      { key: "account_last4",   header: "Account (last 4)", width: 16 },
+      { key: "ifsc",            header: "IFSC Code",        width: 16 },
+      { key: "account_holder",  header: "Account Holder",   width: 22 },
+      { key: "selfie_url",      header: "Selfie URL",       width: 30 },
+      { key: "bid_status",      header: "Bid Status",       width: 14 },
     ]);
 
     styleHeader(wsBids.getRow(1));
@@ -389,11 +391,10 @@ router.get("/export", isAuthenticated, isGovernment, async (req, res) => {
         "volunteer._id", "volunteer.name", "volunteer.email", "volunteer.phone",
         "estimatedAmount", "estimatedDays", "scoreApplicant()",
         "bankDetails.bankName", "accountNumber.slice(-4)", "bankDetails.ifsc",
-        "bankDetails.accountHolder", "bid.selfie", "approved/pending",
+        "bankDetails.accountHolder", "bid.selfie", "accepted/pending/rejected",
       ])
     );
 
-    // scoreApplicant — same formula as your frontend
     const scoreApplicant = (b) => {
       const maxAmount = 10000, maxDays = 30;
       return Math.round(
@@ -427,16 +428,27 @@ router.get("/export", isAuthenticated, isGovernment, async (req, res) => {
       });
       styleDataRow(row, i);
 
-      // format bid_amount as currency
       row.getCell("bid_amount").numFmt = '₹#,##0';
 
-      // highlight approved bids green
-      if (b.status === "approved") {
+      // ✅ fixed: was "approved", now "accepted"
+      if (b.status === "accepted") {
         row.getCell("bid_status").fill = {
           type: "pattern", pattern: "solid",
           fgColor: { argb: C.green_light },
         };
-        row.getCell("bid_status").font = { bold: true, color: { argb: "FF15803D" }, size: 10, name: "Arial" };
+        row.getCell("bid_status").font = {
+          bold: true, color: { argb: "FF15803D" }, size: 10, name: "Arial",
+        };
+      }
+
+      if (b.status === "rejected") {
+        row.getCell("bid_status").fill = {
+          type: "pattern", pattern: "solid",
+          fgColor: { argb: C.red_light },
+        };
+        row.getCell("bid_status").font = {
+          bold: true, color: { argb: "FFB91C1C" }, size: 10, name: "Arial",
+        };
       }
     });
 
@@ -445,16 +457,16 @@ router.get("/export", isAuthenticated, isGovernment, async (req, res) => {
 
 
     // ════════════════════════════════════════════════════════════════════════
-    // SHEET 5 — SUMMARY (auto-calculated)
+    // SHEET 5 — SUMMARY
     // ════════════════════════════════════════════════════════════════════════
     const wsSummary = wb.addWorksheet("Summary", {
       properties: { tabColor: { argb: C.amber } },
     });
 
     wsSummary.columns = [
-      { key: "metric", header: "Metric",        width: 32 },
-      { key: "value",  header: "Value",         width: 20 },
-      { key: "notes",  header: "Notes / Source",width: 40 },
+      { key: "metric", header: "Metric",         width: 32 },
+      { key: "value",  header: "Value",          width: 20 },
+      { key: "notes",  header: "Notes / Source", width: 40 },
     ];
 
     styleHeader(wsSummary.getRow(1));
@@ -464,49 +476,49 @@ router.get("/export", isAuthenticated, isGovernment, async (req, res) => {
     const assigned   = complaints.filter(c => c.status === "assigned");
     const activeVols = volunteers.filter(v => !v.volunteerDetails?.isAvailable);
 
-    // avg days to resolve
     const resolvedWithTime = resolved.filter(c => c.resolvedAt && c.createdAt);
     const avgDays = resolvedWithTime.length
-      ? (resolvedWithTime.reduce((sum, c) => sum + (new Date(c.resolvedAt) - new Date(c.createdAt)) / 86400000, 0) / resolvedWithTime.length).toFixed(1)
+      ? (resolvedWithTime.reduce((sum, c) =>
+          sum + (new Date(c.resolvedAt) - new Date(c.createdAt)) / 86400000, 0
+        ) / resolvedWithTime.length).toFixed(1)
       : "N/A";
 
-    // total approved bid value
+    // ✅ fixed: was "approved", now "accepted"
     const totalPayout = bids
-      .filter(b => b.status === "approved")
+      .filter(b => b.status === "accepted")
       .reduce((sum, b) => sum + (b.estimatedAmount || 0), 0);
 
-    // top category
     const catCount = {};
-    complaints.forEach(c => { if (c.category) catCount[c.category] = (catCount[c.category] || 0) + 1; });
+    complaints.forEach(c => {
+      if (c.category) catCount[c.category] = (catCount[c.category] || 0) + 1;
+    });
     const topCat = Object.entries(catCount).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
 
     const summaryRows = [
-      ["Export Generated On",        new Date().toLocaleString("en-IN"),    "Timestamp of this download"],
-      ["Total Citizens Registered",  users.length,                           "Sheet 1 row count"],
-      ["Email Verified Citizens",    users.filter(u => u.isVerified).length, "isVerified = true"],
-      ["Total Volunteers",           volunteers.length,                      "Sheet 2 row count"],
-      ["Available Volunteers",       volunteers.length - activeVols.length,  "isAvailable = true"],
-      ["Busy Volunteers",            activeVols.length,                      "Currently on a task"],
-      ["Total Complaints Filed",     complaints.length,                      "Sheet 3 row count"],
-      ["Pending (unassigned)",       pending.length,                         "status = pending"],
-      ["Assigned (in progress)",     assigned.length,                        "status = assigned"],
-      ["Resolved",                   resolved.length,                        "status = resolved"],
-      ["Resolution Rate",            complaints.length ? `${Math.round(resolved.length / complaints.length * 100)}%` : "0%", "resolved / total × 100"],
-      ["Avg Days to Resolve",        avgDays === "N/A" ? "N/A" : `${avgDays} days`, "Mean of resolved complaints"],
-      ["Total Approved Payout",      totalPayout,                            "Sum of approved bid amounts"],
-      ["Total Bids Submitted",       bids.length,                            "Sheet 4 row count"],
-      ["Top Complaint Category",     topCat,                                 "Highest frequency category"],
+      ["Export Generated On",       new Date().toLocaleString("en-IN"),     "Timestamp of this download"],
+      ["Total Citizens Registered", users.length,                            "Sheet 1 row count"],
+      ["Email Verified Citizens",   users.filter(u => u.isVerified).length,  "isVerified = true"],
+      ["Total Volunteers",          volunteers.length,                       "Sheet 2 row count"],
+      ["Available Volunteers",      volunteers.length - activeVols.length,   "isAvailable = true"],
+      ["Busy Volunteers",           activeVols.length,                       "Currently on a task"],
+      ["Total Complaints Filed",    complaints.length,                       "Sheet 3 row count"],
+      ["Pending (unassigned)",      pending.length,                          "status = pending"],
+      ["Assigned (in progress)",    assigned.length,                         "status = assigned"],
+      ["Resolved",                  resolved.length,                         "status = resolved"],
+      ["Resolution Rate",           complaints.length
+                                      ? `${Math.round(resolved.length / complaints.length * 100)}%`
+                                      : "0%",                                "resolved / total × 100"],
+      ["Avg Days to Resolve",       avgDays === "N/A" ? "N/A" : `${avgDays} days`, "Mean of resolved complaints"],
+      ["Total Accepted Payout",     totalPayout,                             "Sum of accepted bid amounts"],
+      ["Total Bids Submitted",      bids.length,                             "Sheet 4 row count"],
+      ["Top Complaint Category",    topCat,                                  "Highest frequency category"],
     ];
 
     summaryRows.forEach(([metric, value, notes], i) => {
       const row = wsSummary.addRow({ metric, value, notes });
       styleDataRow(row, i);
-
-      // bold metric names
       row.getCell("metric").font = { bold: true, size: 10, name: "Arial" };
-
-      // format payout as currency
-      if (metric === "Total Approved Payout") {
+      if (metric === "Total Accepted Payout") {
         row.getCell("value").numFmt = '₹#,##0';
       }
     });
@@ -514,10 +526,10 @@ router.get("/export", isAuthenticated, isGovernment, async (req, res) => {
     wsSummary.views = [{ state: "frozen", ySplit: 1 }];
 
 
-    // ── 3. Stream the workbook to the response ───────────────────────────────
-    const now       = new Date();
-    const dateStr   = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
-    const filename  = `JanSahayak_Export_${dateStr}.xlsx`;
+    // ── 3. Stream workbook to response ───────────────────────────────────────
+    const now      = new Date();
+    const dateStr  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+    const filename = `JanSahayak_Export_${dateStr}.xlsx`;
 
     res.setHeader("Content-Type",        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
