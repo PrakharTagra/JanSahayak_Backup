@@ -286,7 +286,7 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#060e1f] text-white flex">
+    <div className="min-h-screen bg-[#060e1f] text-white flex overflow-x-hidden">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
         .font-serif-display { font-family: 'Source Serif 4', Georgia, serif; }
@@ -309,7 +309,7 @@ export default function UserDashboard() {
       </div>
 
       {/* Main */}
-      <div className="ml-0 md:ml-[30%] flex-1 flex flex-col min-h-screen">
+      <div className="ml-0 md:ml-[30%] w-full md:w-[70%] flex-1 flex flex-col min-h-screen">
 
         {/* Top bar */}
         <div className="tricolor-bar h-1 w-full shrink-0" />
