@@ -313,34 +313,31 @@ export default function UserDashboard() {
 
         {/* Top bar */}
         <div className="tricolor-bar h-1 w-full shrink-0" />
-        <div className="bg-[#0a1628] border-b border-amber-700/30 px-4 py-3 flex items-center justify-between shrink-0">
-          
-          {/* Left: hamburger + title */}
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="bg-[#0a1628] border-b border-amber-700/30 px-6 py-3 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            {/* Hamburger — mobile only */}
             <button
-              className="md:hidden text-slate-400 hover:text-white text-xl leading-none shrink-0"
+              className="md:hidden text-slate-400 hover:text-white text-xl leading-none"
               onClick={() => setSidebarOpen(true)}
             >
               ☰
             </button>
-            <div className="min-w-0">
-              <h1 className="text-base font-black font-serif-display text-white leading-tight truncate">
+            <div>
+              <h1 className="text-base font-black font-serif-display text-white leading-tight">
                 Citizen Dashboard
               </h1>
-              <p className="text-[10px] text-slate-500 font-mono-gov truncate">
+              <p className="text-[10px] text-slate-500 font-mono-gov">
                 JanSahayak Portal &nbsp;|&nbsp; नागरिक डैशबोर्ड
               </p>
             </div>
           </div>
-
-          {/* Right: portal status badge */}
-          <div className="shrink-0 ml-3">
-            <div className="border border-amber-700/40 bg-amber-900/20 text-amber-300 text-[10px] font-mono-gov uppercase tracking-widest px-3 py-1 whitespace-nowrap">
+          <div className="flex items-center gap-4">
+            <div className="border border-amber-700/40 bg-amber-900/20 text-amber-300 text-[10px] font-mono-gov uppercase tracking-widest px-3 py-1">
               🟢 Portal Active
             </div>
           </div>
-
         </div>
+
         {/* Content */}
         <div className="flex-1 gov-grid p-6 overflow-auto">
 
