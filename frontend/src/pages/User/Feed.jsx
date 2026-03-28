@@ -233,11 +233,18 @@ export default function Feed() {
       });
       const data = await res.json();
       if (data.success) {
-        const sorted = [...data.complaints].sort((a, b) =>
-          sortBy === "upvotes"
-            ? (b.upvotes?.length || 0) - (a.upvotes?.length || 0)
-            : new Date(b.createdAt) - new Date(a.createdAt)
-        );
+        // const sorted = [...data.complaints].sort((a, b) =>
+        //   sortBy === "upvotes"
+        //     ? (b.upvotes?.length || 0) - (a.upvotes?.length || 0)
+        //     : new Date(b.createdAt) - new Date(a.createdAt)
+        // );
+        const sorted = [...data.complaints]
+          .filter(c => c.status !== "resolved" && c.status !== "assigned")
+          .sort((a, b) =>
+            sortBy === "upvotes"
+              ? (b.upvotes?.length || 0) - (a.upvotes?.length || 0)
+              : new Date(b.createdAt) - new Date(a.createdAt)
+          );
         setComplaints(sorted);
       }
     } catch (err) {
