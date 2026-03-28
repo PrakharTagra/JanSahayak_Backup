@@ -102,7 +102,7 @@ export default function Landing() {
               onClick={() => navigate("/login")}
               className="px-5 py-2 border border-amber-600/60 text-amber-400 hover:bg-amber-600/10 transition text-sm font-semibold tracking-wide uppercase font-mono-gov"
             >
-              Citizen Login
+              Login
             </button>
             <button
               onClick={() => navigate("/signup")}
