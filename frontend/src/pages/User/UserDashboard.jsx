@@ -522,7 +522,7 @@ export default function UserDashboard() {
       </div>
 
       {/* ✅ Main — padding-left reserves space for the fixed sidebar */}
-      <div className="md:pl-[30vw] flex flex-col min-h-screen">
+      <div className="md:pl-[24.5vw] flex flex-col min-h-screen">
 
         {/* Top bar */}
         <div className="tricolor-bar h-1 w-full shrink-0" />
