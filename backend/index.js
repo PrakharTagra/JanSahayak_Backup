@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const database = require("./config/database");
+const exportRoutes = require("./routes/exportRoutes");
 
 dotenv.config();
 
@@ -35,6 +36,9 @@ app.use("/api/v1/complaint", require("./routes/complaint"));
 app.use("/api/v1/volunteer", require("./routes/volunteer"));
 app.use("/api/v1/government", require("./routes/government"));
 app.use("/api/v1/classify", require("./routes/classify"));
+
+
+app.use("/api/v1/authority", exportRoutes);
 
 // default route
 app.get("/", (req, res) => {

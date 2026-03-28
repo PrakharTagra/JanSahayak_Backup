@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
+import ExportButton from "../../components/ExportButton";
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 const API = `${import.meta.env.VITE_API_URL}/api/v1`;
@@ -145,7 +146,7 @@ function Navbar({ active, setView, counts }) {
               >
                 Cancel
               </button>
-
+              <ExportButton />
               <button
                 className="btn-danger"
                 style={{ flex: 1 }}
