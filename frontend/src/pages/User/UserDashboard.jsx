@@ -309,7 +309,7 @@ export default function UserDashboard() {
       </div>
 
       {/* Main */}
-      <div className="ml-0 md:ml-[30%] flex-1 min-w-0 flex flex-col min-h-screen">
+      <div className="ml-0 md:ml-[30%] w-full md:w-[70%] flex-1 flex flex-col min-h-screen">
 
         {/* Top bar */}
         <div className="tricolor-bar h-1 w-full shrink-0" />
