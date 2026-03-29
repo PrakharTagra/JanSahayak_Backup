@@ -45,143 +45,6 @@ const Badge = ({ label, className = "" }) => (
   <span className={`text-[9px] font-mono px-2 py-0.5 border uppercase tracking-widest ${className}`}>{label}</span>
 );
 
-// ─── LEAFLET MAP COMPONENT ────────────────────────────────────────────────────
-// geoLocation.coordinates = [longitude, latitude]  (GeoJSON order)
-function ComplaintMap({ geoLocation, accuracy }) {
-  const [mapEl, setMapEl] = useState(null);
-
-  useEffect(() => {
-    if (!mapEl || !geoLocation?.coordinates) return;
-
-    const [lon, lat] = geoLocation.coordinates;
-    if (!lat || !lon) return;
-
-    let mapInstance = null;
-
-    const init = (L) => {
-      mapInstance = L.map(mapEl, {
-        center: [lat, lon],
-        zoom: 16,
-        zoomControl: false,
-        attributionControl: false,
-        dragging: false,
-        scrollWheelZoom: false,
-        doubleClickZoom: false,
-        touchZoom: false,
-      });
-
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-      }).addTo(mapInstance);
-
-      const icon = L.divIcon({
-        className: "",
-        html: `<div style="
-          width:24px;height:24px;
-          background:#FF9933;
-          border:3px solid #060e1f;
-          border-radius:50% 50% 50% 0;
-          transform:rotate(-45deg);
-          box-shadow:0 2px 8px rgba(0,0,0,0.7);
-        "></div>`,
-        iconSize: [24, 24],
-        iconAnchor: [12, 24],
-      });
-
-      L.marker([lat, lon], { icon }).addTo(mapInstance);
-
-      if (accuracy) {
-        L.circle([lat, lon], {
-          radius: accuracy,
-          color: "#FF9933",
-          fillColor: "#FF9933",
-          fillOpacity: 0.07,
-          weight: 1,
-          dashArray: "4 4",
-        }).addTo(mapInstance);
-      }
-    };
-
-    const loadLeaflet = () => {
-      if (window.L) return init(window.L);
-
-      if (!document.getElementById("leaflet-css")) {
-        const link = document.createElement("link");
-        link.id = "leaflet-css";
-        link.rel = "stylesheet";
-        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-        document.head.appendChild(link);
-      }
-
-      if (!document.getElementById("leaflet-js")) {
-        const script = document.createElement("script");
-        script.id = "leaflet-js";
-        script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-        script.onload = () => init(window.L);
-        document.head.appendChild(script);
-      } else {
-        const check = setInterval(() => {
-          if (window.L) { clearInterval(check); init(window.L); }
-        }, 50);
-      }
-    };
-
-    loadLeaflet();
-
-    return () => {
-      if (mapInstance) { mapInstance.remove(); mapInstance = null; }
-    };
-  }, [mapEl, geoLocation, accuracy]);
-
-  if (!geoLocation?.coordinates) return null;
-
-  const [lon, lat] = geoLocation.coordinates;
-  const accColor = accuracy <= 50 ? "#34d399" : accuracy <= 200 ? "#60a5fa" : "#f59e0b";
-
-  return (
-    <div style={{ position: "relative", borderTop: "1px solid rgba(255,153,51,0.12)" }}>
-      {/* Map tile */}
-      <div
-        ref={setMapEl}
-        style={{ width: "100%", height: 140, background: "#060e1f" }}
-      />
-
-      {/* Dark gradient overlay at bottom */}
-      <div style={{
-        position: "absolute", bottom: 0, left: 0, right: 0,
-        background: "linear-gradient(to top, rgba(13,27,46,0.95), transparent)",
-        padding: "18px 10px 6px",
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        pointerEvents: "none",
-      }}>
-        <span style={{ fontSize: 9, fontFamily: "'JetBrains Mono',monospace", color: "rgba(255,255,255,0.45)", letterSpacing: "0.04em" }}>
-          {lat.toFixed(5)}, {lon.toFixed(5)}
-        </span>
-        {accuracy && (
-          <span style={{
-            fontSize: 9, fontFamily: "'JetBrains Mono',monospace",
-            color: accColor, border: `1px solid ${accColor}40`, padding: "1px 6px",
-          }}>
-            ±{accuracy}m
-          </span>
-        )}
-      </div>
-
-      {/* Top-left label */}
-      <div style={{
-        position: "absolute", top: 6, left: 8,
-        background: "rgba(6,14,31,0.8)", border: "1px solid rgba(255,153,51,0.35)",
-        padding: "2px 7px", fontSize: 8,
-        fontFamily: "'JetBrains Mono',monospace",
-        color: "#FF9933", letterSpacing: "0.1em", textTransform: "uppercase",
-        pointerEvents: "none",
-      }}>
-        📡 GPS Pin
-      </div>
-    </div>
-  );
-}
-
 // ─── STYLES ───────────────────────────────────────────────────────────────────
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
@@ -232,10 +95,6 @@ const STYLES = `
 
   .section-label { font-size:9px; color:#FF9933; text-transform:uppercase; letter-spacing:0.18em; margin-bottom:12px; }
   .divider { border:none; border-top:1px solid rgba(255,255,255,0.06); margin:16px 0; }
-
-  /* Leaflet inside dark portal */
-  .leaflet-container { z-index:0 !important; }
-  .leaflet-tile { filter: brightness(0.7) saturate(0.5) hue-rotate(200deg); }
 `;
 
 // ─── NAVBAR ───────────────────────────────────────────────────────────────────
@@ -611,12 +470,6 @@ function AssignTaskView({ complaints, setComplaints, loading }) {
                 </div>
               </div>
 
-              {/* ── Leaflet Map — only renders if geoLocation is present ── */}
-              <ComplaintMap
-                geoLocation={c.geoLocation}
-                accuracy={c.gpsAccuracyM}
-              />
-
               {/* Card body */}
               <div style={{ padding:"14px 16px 16px" }}>
                 <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
@@ -638,6 +491,17 @@ function AssignTaskView({ complaints, setComplaints, loading }) {
                   <div style={{ fontSize:9, color:"#64748b" }}>
                     {c.postedBy?.name ? `👤 ${c.postedBy.name}` : ""}
                   </div>
+                  {c.geoLocation?.coordinates && (
+                    <a
+                    href={`https://www.google.com/maps?q=${c.geoLocation.coordinates[1]},${c.geoLocation.coordinates[0]}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={e => e.stopPropagation()}
+                    style={{ fontSize:9, color:"#60a5fa", border:"1px solid rgba(96,165,250,0.4)", background:"rgba(96,165,250,0.08)", fontFamily:"'JetBrains Mono',monospace", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", padding:"6px 14px", cursor:"pointer", textDecoration:"none", display:"inline-flex", alignItems:"center", gap:4 }}
+                    >
+                    📍 Map
+                    </a>
+                    )}
                   <button style={{ background:"transparent", color:"#FF9933", border:"1px solid rgba(255,153,51,0.5)", fontFamily:"'JetBrains Mono',monospace", fontSize:9, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", padding:"6px 14px", cursor:"pointer" }}>
                     View Details →
                   </button>
