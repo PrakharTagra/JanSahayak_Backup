@@ -306,6 +306,9 @@ const isValidCoord = (lat, lon) =>
 
 // ✅ Create Complaint
 exports.createComplaint = async (req, res) => {
+    // top of createComplaint, remove after debugging
+    console.log("BODY:", req.body);
+    console.log("FILE:", req.file);
     try {
         const {
             title,
@@ -315,22 +318,21 @@ exports.createComplaint = async (req, res) => {
             latitude,
             longitude,
             gps_accuracy_m,
-            // captured_at_client intentionally ignored — we use server time
         } = req.body;
 
-        // ── Field presence check ───────────────────────────────────────────────
-        if (!title || !description || !category || !location_address) {
+        // ── Field presence check ──────────────────────────────────────────────────────
+        if (!title || !description || !category) {
             return res.status(400).json({
                 success: false,
-                message: "title, description, category and location_address are required.",
+                message: "title, description and category are required.",
             });
         }
 
-        // ── GPS presence check ─────────────────────────────────────────────────
+        // ── GPS presence check ────────────────────────────────────────────────────────
         if (latitude == null || longitude == null || gps_accuracy_m == null) {
             return res.status(422).json({
                 success: false,
-                message: "GPS coordinates and accuracy are required. Take the photo at the site.",
+                message: "GPS coordinates are required. Take the photo at the site.",
             });
         }
 
@@ -352,27 +354,30 @@ exports.createComplaint = async (req, res) => {
             });
         }
 
-        // ── Server-side accuracy gate (mirrors the frontend 200 m limit) ───────
         if (accuracy > GPS_ACCURACY_LIMIT_M) {
             return res.status(422).json({
                 success: false,
-                message: `GPS accuracy too low (±${accuracy}m). Must be ≤${GPS_ACCURACY_LIMIT_M}m. Move to open sky and retry.`,
+                message: `GPS accuracy too low (±${accuracy}m). Must be ≤${GPS_ACCURACY_LIMIT_M}m.`,
             });
         }
 
-        // ── Create ─────────────────────────────────────────────────────────────
+        // ── Fallback address if Nominatim returned null ───────────────────────────────
+        const resolvedAddress = location_address?.trim()
+            ? location_address.trim()
+            : `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+
         const complaint = await Complaint.create({
             title,
             description,
             category,
-            location:    location_address,          // human-readable address string
+            location:    resolvedAddress,   // ← never empty now
             geoLocation: {
                 type:        "Point",
-                coordinates: [lon, lat],            // GeoJSON = [lng, lat]
+                coordinates: [lon, lat],
             },
             gpsAccuracyM: accuracy,
             photo:        req.file?.path ?? null,
-            capturedAt:   new Date(),               // server clock — never client
+            capturedAt:   new Date(),
             postedBy:     req.user._id,
         });
 
