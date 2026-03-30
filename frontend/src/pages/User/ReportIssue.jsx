@@ -2221,43 +2221,33 @@ export default function ReportIssue() {
                   </div>
 
                   {/* Location */}
-<div>
-  <label className="text-[10px] font-mono-gov text-slate-500 uppercase tracking-widest block mb-1.5">
-    Location / Address <span className="text-amber-500">*</span>
-    {locationAutoFilled && <span className="ml-2 text-green-500 normal-case">— extracted from image metadata</span>}
-  </label>
-
-  {loadingAI ? (
-    /* Loader while AI is processing */
-    <div className="w-full px-4 py-3 bg-[#060e1f] border border-amber-600/40 flex items-center gap-3">
-      <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin shrink-0" />
-      <span className="text-amber-400 text-sm font-mono-gov">Extracting location from image...</span>
-    </div>
-  ) : (
-    <input
-      type="text"
-      placeholder="Will auto-fill from image, or enter manually"
-      value={location}
-      onChange={(e) => { setLocation(e.target.value); setLocationAutoFilled(false); }}
-      required
-      className={`w-full px-4 py-3 bg-[#060e1f] border text-white placeholder-slate-600 text-sm font-mono-gov transition ${
-        locationAutoFilled
-          ? "border-green-600/70 focus:border-green-500"
-          : "border-white/10 focus:border-amber-600/60"
-      }`}
-    />
-  )}
-
-  {locationAutoFilled ? (
-    <p className="text-[10px] text-green-400 font-mono-gov mt-1 flex items-center gap-1">
-      <span>✦</span> Location auto-filled from image EXIF metadata
-    </p>
-  ) : !loadingAI ? (
-    <p className="text-[10px] text-slate-600 font-mono-gov mt-1">
-      Precise location helps authorities find and resolve the issue faster.
-    </p>
-  ) : null}
-</div>
+                  <div>
+                    <label className="text-[10px] font-mono-gov text-slate-500 uppercase tracking-widest block mb-1.5">
+                      Location / Address <span className="text-amber-500">*</span>
+                      {locationAutoFilled && <span className="ml-2 text-green-500 normal-case">— extracted from image metadata</span>}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={loadingAI ? "Extracting location from image..." : "Will auto-fill from image, or enter manually"}
+                      value={location}
+                      onChange={(e) => { setLocation(e.target.value); setLocationAutoFilled(false); }}
+                      required
+                      className={`w-full px-4 py-3 bg-[#060e1f] border text-white placeholder-slate-600 text-sm font-mono-gov transition ${
+                        locationAutoFilled
+                          ? "border-green-600/70 focus:border-green-500"
+                          : "border-white/10 focus:border-amber-600/60"
+                      }`}
+                    />
+                    {locationAutoFilled ? (
+                      <p className="text-[10px] text-green-400 font-mono-gov mt-1 flex items-center gap-1">
+                        <span>✦</span> Location auto-filled from image EXIF metadata
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-slate-600 font-mono-gov mt-1">
+                        Precise location helps authorities find and resolve the issue faster.
+                      </p>
+                    )}
+                  </div>
 
                 </div>
               </div>
