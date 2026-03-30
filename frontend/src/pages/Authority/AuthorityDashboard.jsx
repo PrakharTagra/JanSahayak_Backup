@@ -146,6 +146,7 @@ function Navbar({ active, setView, counts }) {
               >
                 Cancel
               </button>
+              <ExportButton />
               <button
                 className="btn-danger"
                 style={{ flex: 1 }}
@@ -192,7 +193,7 @@ function Navbar({ active, setView, counts }) {
           <div style={{ fontSize:9, color:"#475569", fontFamily:"'JetBrains Mono',monospace", display:"flex", alignItems:"center", gap:6 }}>
             <span style={{ color:"#22c55e" }}>●</span>Authority Portal
           </div>
-          <ExportButton />
+
           <button
             onClick={() => setShowLogoutConfirm(true)}
             style={{
