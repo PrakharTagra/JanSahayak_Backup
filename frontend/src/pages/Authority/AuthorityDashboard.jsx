@@ -96,6 +96,25 @@ const STYLES = `
   .divider { border:none; border-top:1px solid rgba(255,255,255,0.06); margin:16px 0; }
 `;
 
+// ─── EXPORT HELPER ────────────────────────────────────────────────────────────
+const handleExcelExport = async () => {
+  try {
+    const res = await fetch(`${API}/reports/export`, { headers: authHeaders() });
+    if (!res.ok) throw new Error("Export failed");
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `JanSahayak_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    alert("Export failed: " + err.message);
+  }
+};
+
 // ─── NAVBAR ───────────────────────────────────────────────────────────────────
 function Navbar({ active, setView, counts }) {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -188,10 +207,31 @@ function Navbar({ active, setView, counts }) {
             </button>
           ))}
         </div>
+
+        {/* ── RIGHT SIDE: status dot + Export + Logout ── */}
         <div style={{ display:"flex", alignItems:"center", gap:12 }}>
           <div style={{ fontSize:9, color:"#475569", fontFamily:"'JetBrains Mono',monospace", display:"flex", alignItems:"center", gap:6 }}>
             <span style={{ color:"#22c55e" }}>●</span>Authority Portal
           </div>
+
+          {/* ✅ EXPORT EXCEL BUTTON */}
+          <button
+            onClick={handleExcelExport}
+            style={{
+              background: "transparent",
+              border: "1px solid rgba(34,197,94,0.5)",
+              color: "#22c55e",
+              fontSize: 9,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              padding: "6px 12px",
+              cursor: "pointer",
+              fontFamily: "'JetBrains Mono',monospace",
+            }}
+          >
+            📊 Export Excel
+          </button>
 
           <button
             onClick={() => setShowLogoutConfirm(true)}
@@ -686,7 +726,6 @@ function PendingView({ complaints, setComplaints, loading }) {
                   {c.postedBy?.name && ` · 👤 ${c.postedBy.name}`}
                 </div>
 
-                {/* ✅ NEW: Description */}
                 {c.description && (
                   <p style={{ fontSize: 10, color: "#94a3b8", lineHeight: 1.6, marginBottom: 14,
                     display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
@@ -699,7 +738,6 @@ function PendingView({ complaints, setComplaints, loading }) {
                   <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", padding: 12, marginBottom: 14 }}>
                     <div style={{ fontSize: 8, color: "#475569", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Assigned Volunteer</div>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                      {/* ✅ NEW: show selfie from approved bid if available */}
                       {bid?.selfie
                         ? <img src={bid.selfie} alt="selfie" style={{ width: 36, height: 36, objectFit: "cover", border: "2px solid rgba(255,153,51,0.4)", flexShrink: 0 }} />
                         : <div style={{ width: 36, height: 36, background: "#FF9933", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 900, color: "#060e1f", flexShrink: 0 }}>{initials}</div>
@@ -707,7 +745,6 @@ function PendingView({ complaints, setComplaints, loading }) {
                       <div>
                         <div style={{ fontSize: 12, fontWeight: 700, color: "white" }}>{vol.name || "Volunteer"}</div>
                         <div style={{ fontSize: 9, color: "#64748b" }}>{vol.email}</div>
-                        {/* ✅ NEW: phone */}
                         {vol.phone && <div style={{ fontSize: 9, color: "#64748b" }}>📱 {vol.phone}</div>}
                         <div style={{ fontSize: 9, color: "#475569", marginTop: 2 }}>
                           ✅ {vol.volunteerDetails?.totalTasksCompleted || 0} tasks completed
@@ -715,7 +752,6 @@ function PendingView({ complaints, setComplaints, loading }) {
                       </div>
                     </div>
 
-                    {/* Bid metrics */}
                     {bid && (
                       <>
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 10 }}>
@@ -727,7 +763,6 @@ function PendingView({ complaints, setComplaints, loading }) {
                             <div style={{ fontSize: 8, color: "#475569" }}>Est. Days</div>
                             <div style={{ fontSize: 15, fontWeight: 900, color: "#f59e0b" }}>{bid.estimatedDays || "—"}d</div>
                           </div>
-                          {/* ✅ NEW: assigned date */}
                           <div>
                             <div style={{ fontSize: 8, color: "#475569" }}>Assigned On</div>
                             <div style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", marginTop: 4 }}>
@@ -736,7 +771,6 @@ function PendingView({ complaints, setComplaints, loading }) {
                           </div>
                         </div>
 
-                        {/* ✅ NEW: Bank details */}
                         <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", padding: "8px 10px", fontSize: 9, color: "#64748b", lineHeight: 1.7 }}>
                           🏦 {bid.bankDetails?.bankName} &nbsp;·&nbsp;
                           A/C: ••••{bid.bankDetails?.accountNumber?.slice(-4)} &nbsp;·&nbsp;
@@ -748,7 +782,6 @@ function PendingView({ complaints, setComplaints, loading }) {
                   </div>
                 )}
 
-                {/* Actions — contact now shows real phone */}
                 <div style={{ display: "flex", gap: 8 }}>
                   <button className="btn-ghost" style={{ flex: 1 }}
                     onClick={() => vol?.phone && window.open(`tel:${vol.phone}`)}>
@@ -854,7 +887,6 @@ function ResolvedView({ complaints, loading }) {
                     </div>
                     <div className="serif" style={{ fontSize: 11, fontWeight: 700, marginBottom: 3, color: "white", lineHeight: 1.35 }}>{r.title}</div>
                     <div style={{ fontSize: 9, color: "#64748b", marginBottom: 4 }}>📍 {r.location}</div>
-                    {/* ✅ Description */}
                     {r.description && (
                       <div style={{ fontSize: 9, color: "#475569", lineHeight: 1.55,
                         display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
@@ -863,7 +895,7 @@ function ResolvedView({ complaints, loading }) {
                     )}
                   </td>
 
-                  {/* ✅ Reported By */}
+                  {/* Reported By */}
                   <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                     {r.postedBy ? (
                       <>
@@ -877,7 +909,6 @@ function ResolvedView({ complaints, loading }) {
                   <td style={{ padding: "12px 14px" }}>
                     {vol ? (
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        {/* ✅ Selfie from bid or initials fallback */}
                         {bid?.selfie
                           ? <img src={bid.selfie} alt="selfie" style={{ width: 30, height: 30, objectFit: "cover", border: "1px solid rgba(255,153,51,0.3)", flexShrink: 0 }} />
                           : <div style={{ width: 30, height: 30, background: "#FF9933", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 900, color: "#060e1f", flexShrink: 0 }}>{initials}</div>
@@ -885,9 +916,7 @@ function ResolvedView({ complaints, loading }) {
                         <div>
                           <div style={{ fontSize: 10, fontWeight: 700, color: "white" }}>{vol.name || "—"}</div>
                           <div style={{ fontSize: 9, color: "#64748b" }}>{vol.email}</div>
-                          {/* ✅ Phone */}
                           {vol.phone && <div style={{ fontSize: 9, color: "#64748b" }}>📱 {vol.phone}</div>}
-                          {/* ✅ Tasks completed */}
                           <div style={{ fontSize: 9, color: "#475569", marginTop: 2 }}>
                             ✅ {vol.volunteerDetails?.totalTasksCompleted || 0} tasks done
                           </div>
@@ -895,6 +924,7 @@ function ResolvedView({ complaints, loading }) {
                       </div>
                     ) : <span style={{ fontSize: 9, color: "#475569" }}>—</span>}
                   </td>
+
                   {/* Bid & Payment */}
                   <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                     {bid && bid.estimatedAmount ? (
@@ -919,7 +949,7 @@ function ResolvedView({ complaints, loading }) {
                     )}
                   </td>
 
-                  {/* ✅ Timeline */}
+                  {/* Timeline */}
                   <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                     <div style={{ fontSize: 8, color: "#475569", marginBottom: 2 }}>Filed</div>
                     <div style={{ fontSize: 9, color: "#94a3b8", marginBottom: 6 }}>

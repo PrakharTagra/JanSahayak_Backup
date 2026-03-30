@@ -44,6 +44,7 @@ app.use("/api/v1/complaint", require("./routes/complaint"));
 app.use("/api/v1/volunteer", require("./routes/volunteer"));
 app.use("/api/v1/government", require("./routes/government"));
 app.use("/api/v1/classify", require("./routes/classify"));
+app.use("/api/v1/reports", require("./routes/exportRoutes"));
 
 // default route
 app.get("/", (req, res) => {
