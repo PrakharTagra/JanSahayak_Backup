@@ -308,7 +308,7 @@ const isValidCoord = (lat, lon) =>
 exports.createComplaint = async (req, res) => {
     // top of createComplaint, remove after debugging
     console.log("BODY:", req.body);
-    console.log("FILE:", req.file ? req.file.originalname : "no file");
+    console.log("FILE:", req.file);
     try {
         const {
             title,
