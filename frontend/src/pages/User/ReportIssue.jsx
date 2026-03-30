@@ -641,6 +641,11 @@ export default function ReportIssue() {
                   ? "Submitting…"
                   : "Submit Complaint →"}
               </button>
+
+              <p className="text-[10px] text-slate-600 font-mono-gov text-center -mt-2">
+                GPS coordinates are embedded in this report and plotted on the civic map.
+                Server timestamp is applied on receipt — client time is not trusted.
+              </p>
             </form>
 
             <div className="mt-8 border border-white/5 bg-white/5 py-2 px-4 text-center text-[10px] text-slate-600 font-mono-gov">
