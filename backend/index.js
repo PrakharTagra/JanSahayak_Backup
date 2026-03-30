@@ -20,10 +20,19 @@ app.use(cors({
   credentials: true
 }));
 
-app.options("*", cors({
-  origin: "https://jansahayak-rho.vercel.app",
-  credentials: true
-}));
+// app.options("/.*/", cors({
+//   origin: "https://jansahayak-rho.vercel.app",
+//   credentials: true
+// }));
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    return cors({
+      origin: "https://jansahayak-rho.vercel.app",
+      credentials: true
+    })(req, res, next);
+  }
+  next();
+});
 
 // middlewares
 app.use(express.json());
