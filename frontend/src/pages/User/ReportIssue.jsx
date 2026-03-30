@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import UserSidebar from "../../components/UserSidebar";
 
-// ── Styles ────────────────────────────────────────────────────────────────────
+// ── Styles ───────────────────────────────────────────────────────────────────
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
   .font-serif-display { font-family: 'Source Serif 4', Georgia, serif }
@@ -12,27 +12,23 @@ const STYLES = `
   input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #060e1f inset !important; -webkit-text-fill-color: white !important }
 `;
 
-// ── Reverse geocode (Nominatim — free, no key needed) ─────────────────────────
-// For production swap to OpenCage (2500 free req/day, better India coverage):
+// ── Reverse geocode (Nominatim) ───────────────────────────────────────────────
+// For production, replace with OpenCage (2500 free req/day, better India coverage):
 //   https://opencagedata.com
 //   const OPENCAGE_KEY = "YOUR_KEY";
 //   const reverseGeocode = (lat, lon) =>
 //     fetch(`https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lon}&key=${OPENCAGE_KEY}&language=en&no_annotations=1`)
 //     .then(r => r.json()).then(d => d.results[0]?.formatted ?? null);
 const reverseGeocode = async (lat, lon) => {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=18&addressdetails=1`,
-      { headers: { "Accept-Language": "en" } }
-    );
-    const d = await res.json();
-    return d?.display_name ?? null;
-  } catch {
-    return null;
-  }
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=18&addressdetails=1`,
+    { headers: { "Accept-Language": "en" } }
+  );
+  const d = await res.json();
+  return d?.display_name ?? null;
 };
 
-// ── Address autocomplete (Nominatim search, India-scoped) ─────────────────────
+// ── Address autocomplete (Nominatim search, India-scoped) ────────────────────
 const searchAddress = async (query) => {
   if (query.length < 3) return [];
   try {
@@ -46,65 +42,65 @@ const searchAddress = async (query) => {
   }
 };
 
-// ── EXIF GPS Extractor (for gallery uploads that still carry metadata) ─────────
+// ── EXIF GPS Extractor ────────────────────────────────────────────────────────
 const extractGPS = (file) =>
   new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (ev) => {
-      try {
-        const view = new DataView(ev.target.result);
-        if (view.getUint16(0, false) !== 0xffd8) return resolve(null);
-        let offset = 2;
-        while (offset < view.byteLength) {
-          const marker = view.getUint16(offset, false);
-          offset += 2;
-          if (marker === 0xffe1) {
-            const exifLength = view.getUint16(offset, false);
-            const exifData   = new DataView(ev.target.result, offset + 2, exifLength - 2);
-            if (exifData.getUint32(0, false) !== 0x45786966) return resolve(null);
-            const littleEndian = exifData.getUint16(6) === 0x4949;
-            const ifdOffset    = exifData.getUint32(10, littleEndian) + 6;
-            const numEntries   = exifData.getUint16(ifdOffset, littleEndian);
-            let gpsIFDOffset   = null;
-            for (let i = 0; i < numEntries; i++) {
-              const entryOffset = ifdOffset + 2 + i * 12;
-              const tag = exifData.getUint16(entryOffset, littleEndian);
-              if (tag === 0x8825) {
-                gpsIFDOffset = exifData.getUint32(entryOffset + 8, littleEndian) + 6;
-                break;
-              }
+      const view = new DataView(ev.target.result);
+      if (view.getUint16(0, false) !== 0xffd8) return resolve(null);
+
+      let offset = 2;
+      while (offset < view.byteLength) {
+        const marker = view.getUint16(offset, false);
+        offset += 2;
+        if (marker === 0xffe1) {
+          const exifLength = view.getUint16(offset, false);
+          const exifData = new DataView(ev.target.result, offset + 2, exifLength - 2);
+          if (exifData.getUint32(0, false) !== 0x45786966) return resolve(null);
+
+          const littleEndian = exifData.getUint16(6) === 0x4949;
+          const ifdOffset = exifData.getUint32(10, littleEndian) + 6;
+          const numEntries = exifData.getUint16(ifdOffset, littleEndian);
+
+          let gpsIFDOffset = null;
+          for (let i = 0; i < numEntries; i++) {
+            const entryOffset = ifdOffset + 2 + i * 12;
+            const tag = exifData.getUint16(entryOffset, littleEndian);
+            if (tag === 0x8825) {
+              gpsIFDOffset = exifData.getUint32(entryOffset + 8, littleEndian) + 6;
+              break;
             }
-            if (gpsIFDOffset === null) return resolve(null);
-            const gpsEntries = exifData.getUint16(gpsIFDOffset, littleEndian);
-            const gps = {};
-            for (let i = 0; i < gpsEntries; i++) {
-              const entryOffset = gpsIFDOffset + 2 + i * 12;
-              const tag  = exifData.getUint16(entryOffset, littleEndian);
-              const type = exifData.getUint16(entryOffset + 2, littleEndian);
-              const valOffset = exifData.getUint32(entryOffset + 8, littleEndian) + 6;
-              const readRational = (off) =>
-                exifData.getUint32(off, littleEndian) / exifData.getUint32(off + 4, littleEndian);
-              if (type === 5) {
-                gps[tag] = [readRational(valOffset), readRational(valOffset + 8), readRational(valOffset + 16)];
-              } else if (type === 2) {
-                gps[tag] = String.fromCharCode(exifData.getUint8(entryOffset + 8));
-              }
-            }
-            if (!gps[2] || !gps[4]) return resolve(null);
-            const dmsToDD = ([d, m, s]) => d + m / 60 + s / 3600;
-            let lat = dmsToDD(gps[2]);
-            let lon = dmsToDD(gps[4]);
-            if (gps[1] === "S") lat = -lat;
-            if (gps[3] === "W") lon = -lon;
-            return resolve({ lat, lon });
-          } else {
-            offset += view.getUint16(offset, false);
           }
+          if (gpsIFDOffset === null) return resolve(null);
+
+          const gpsEntries = exifData.getUint16(gpsIFDOffset, littleEndian);
+          const gps = {};
+          for (let i = 0; i < gpsEntries; i++) {
+            const entryOffset = gpsIFDOffset + 2 + i * 12;
+            const tag  = exifData.getUint16(entryOffset, littleEndian);
+            const type = exifData.getUint16(entryOffset + 2, littleEndian);
+            const valOffset = exifData.getUint32(entryOffset + 8, littleEndian) + 6;
+            const readRational = (off) =>
+              exifData.getUint32(off, littleEndian) / exifData.getUint32(off + 4, littleEndian);
+            if (type === 5) {
+              gps[tag] = [readRational(valOffset), readRational(valOffset + 8), readRational(valOffset + 16)];
+            } else if (type === 2) {
+              gps[tag] = String.fromCharCode(exifData.getUint8(entryOffset + 8));
+            }
+          }
+          if (!gps[2] || !gps[4]) return resolve(null);
+          const dmsToDD = ([d, m, s]) => d + m / 60 + s / 3600;
+          let lat = dmsToDD(gps[2]);
+          let lon = dmsToDD(gps[4]);
+          if (gps[1] === "S") lat = -lat;
+          if (gps[3] === "W") lon = -lon;
+          return resolve({ lat, lon });
+        } else {
+          offset += view.getUint16(offset, false);
         }
-        resolve(null);
-      } catch {
-        resolve(null);
       }
+      resolve(null);
     };
     reader.readAsArrayBuffer(file);
   });
@@ -144,159 +140,88 @@ const compressImage = (file, maxSizeMB = 1) =>
     img.src = url;
   });
 
-// ── GPS via watchPosition ─────────────────────────────────────────────────────
-// Progressively refines accuracy.
-// Accepts ≤50m immediately, ≤200m after 6s, ≤500m after 12s, fails gracefully.
-const getAccurateGPS = () =>
-  new Promise((resolve) => {
-    if (!navigator.geolocation) return resolve(null);
-
-    let settled = false;
-    let watchId = null;
-
-    const done = async (pos) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(softTimeout);
-      clearTimeout(hardTimeout);
-      if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-      const address = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
-      resolve(
-        address
-          ? { address, source: "gps", accuracy: Math.round(pos.coords.accuracy) }
-          : null
-      );
-    };
-
-    const fail = () => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(softTimeout);
-      clearTimeout(hardTimeout);
-      if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-      resolve(null);
-    };
-
-    // watchPosition keeps refining the fix
-    watchId = navigator.geolocation.watchPosition(
-      (pos) => { if (pos.coords.accuracy <= 50) done(pos); },
-      fail,
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
-    );
-
-    // After 6s accept anything ≤200m (good street-level)
-    const softTimeout = setTimeout(() => {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => { if (!settled && pos.coords.accuracy <= 200) done(pos); },
-        () => {},
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 3000 }
-      );
-    }, 6000);
-
-    // Hard limit at 12s — accept ≤500m or give up
-    const hardTimeout = setTimeout(() => {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => { if (!settled) pos.coords.accuracy <= 500 ? done(pos) : fail(); },
-        fail,
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 3000 }
-      );
-    }, 12000);
-  });
-
-// ── Detect camera capture (file taken within last 60s) ────────────────────────
-const isCameraCapture = (file) => file.lastModified > Date.now() - 60_000;
-
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function ReportIssue() {
-  const [title, setTitle]                             = useState("");
-  const [desc, setDesc]                               = useState("");
-  const [location, setLocation]                       = useState("");
-  const [category, setCategory]                       = useState("");
-  const [file, setFile]                               = useState(null);
-  const [filePreview, setFilePreview]                 = useState(null);
-  const [submitted, setSubmitted]                     = useState(false);
-  const [agreed, setAgreed]                           = useState(false);
-  const [loadingAI, setLoadingAI]                     = useState(false);
-  const [loadingSubmit, setLoadingSubmit]             = useState(false);
-  const [imageAnalyzed, setImageAnalyzed]             = useState(false);
-  const [locationSource, setLocationSource]           = useState(null); // "exif"|"gps"|"manual"|null
-  const [locationAccuracy, setLocationAccuracy]       = useState(null); // metres
+  const [title, setTitle]                     = useState("");
+  const [desc, setDesc]                       = useState("");
+  const [location, setLocation]               = useState("");
+  const [category, setCategory]               = useState("");
+  const [file, setFile]                       = useState(null);
+  const [filePreview, setFilePreview]         = useState(null);
+  const [submitted, setSubmitted]             = useState(false);
+  const [agreed, setAgreed]                   = useState(false);
+  const [loadingAI, setLoadingAI]             = useState(false);
+  const [loadingSubmit, setLoadingSubmit]     = useState(false);
+  const [imageAnalyzed, setImageAnalyzed]     = useState(false);
+
+  // Location state
+  const [locationSource, setLocationSource]           = useState(null); // "exif" | "gps" | "manual" | null
   const [locationUnavailable, setLocationUnavailable] = useState(false);
-  const [gpsStatus, setGpsStatus]                     = useState(null);
   const [suggestions, setSuggestions]                 = useState([]);
   const [showSuggestions, setShowSuggestions]         = useState(false);
   const searchTimeout                                 = useRef(null);
 
-  // ── 3-layer location resolution ─────────────────────────────────────────────
-  // Camera capture  → device GPS immediately (EXIF stripped by iOS/Android)
-  // Gallery upload  → EXIF GPS first, device GPS fallback
-  // Both fail       → manual input with autocomplete + helpful note
-  const resolveLocation = async (selectedFile, fromCamera) => {
-    if (fromCamera) {
-      // User is physically AT the location — GPS now = location of issue
-      setGpsStatus("Getting your exact GPS location…");
-      const result = await getAccurateGPS();
-      setGpsStatus(null);
-      if (result) {
-        setLocation(result.address);
-        setLocationSource("gps");
-        setLocationAccuracy(result.accuracy);
-        return;
-      }
-    } else {
-      // Gallery: try EXIF first (photo may carry original location)
-      const gpsResult = await extractGPS(selectedFile);
-      if (gpsResult) {
-        const address = await reverseGeocode(gpsResult.lat, gpsResult.lon);
-        if (address) {
-          setLocation(address);
-          setLocationSource("exif");
-          setLocationAccuracy(null);
-          return;
-        }
-      }
-      // EXIF missing — fall back to device GPS
-      setGpsStatus("No GPS in image — trying device GPS…");
-      const result = await getAccurateGPS();
-      setGpsStatus(null);
-      if (result) {
-        setLocation(result.address);
-        setLocationSource("gps");
-        setLocationAccuracy(result.accuracy);
+  // ── 3-layer location resolution ────────────────────────────────────────────
+  const resolveLocation = async (selectedFile) => {
+    const gpsResult = await extractGPS(selectedFile);
+
+    // Layer 1: EXIF GPS from image (most accurate — exact photo location)
+    if (gpsResult) {
+      const address = await reverseGeocode(gpsResult.lat, gpsResult.lon);
+      if (address) {
+        setLocation(address);
+        setLocationSource("exif");
         return;
       }
     }
 
-    // All layers failed
+    // Layer 2: Device GPS (only if accuracy ≤ 200m)
+    const deviceAddress = await new Promise((resolve) => {
+      if (!navigator.geolocation) return resolve(null);
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          if (pos.coords.accuracy > 200) {
+            console.warn(`Device GPS too imprecise: ±${Math.round(pos.coords.accuracy)}m — skipping`);
+            return resolve(null);
+          }
+          const address = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+          resolve(address ?? null);
+        },
+        () => resolve(null),
+        { timeout: 8000, maximumAge: 0, enableHighAccuracy: true }
+      );
+    });
+
+    if (deviceAddress) {
+      setLocation(deviceAddress);
+      setLocationSource("gps");
+      return;
+    }
+
+    // Layer 3: Both failed — ask user to type manually
     setLocationUnavailable(true);
     setLocationSource("manual");
-    setGpsStatus(null);
   };
 
-  // ── Handle file selection (camera or gallery) ───────────────────────────────
-  const handleFileChange = async (e, fromCamera = false) => {
+  // ── File change & AI analysis ───────────────────────────────────────────────
+  const handleFileChange = async (e) => {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
 
-    const isCamera = fromCamera || isCameraCapture(selectedFile);
-
     setFile(selectedFile);
     setLocationSource(null);
-    setLocationAccuracy(null);
     setLocationUnavailable(false);
     setImageAnalyzed(false);
     setCategory("");
     setLocation("");
     setSuggestions([]);
-    setGpsStatus(null);
     setFilePreview(URL.createObjectURL(selectedFile));
 
     try {
       setLoadingAI(true);
 
-      // Location resolution + AI classify run in parallel
       const [, classifyData] = await Promise.all([
-        resolveLocation(selectedFile, isCamera),
+        resolveLocation(selectedFile),
         (async () => {
           const compressed = await compressImage(selectedFile);
           const fd = new FormData();
@@ -306,15 +231,15 @@ export default function ReportIssue() {
           });
           const text = await res.text();
           try { return JSON.parse(text); }
-          catch { throw new Error("Invalid JSON from classify endpoint"); }
+          catch { throw new Error("Invalid JSON from server"); }
         })(),
       ]);
 
       setCategory(classifyData.category);
       setImageAnalyzed(true);
     } catch (err) {
-      console.error("Processing error:", err);
-      alert("Image processing failed. Please try again.");
+      console.error("Error:", err);
+      alert("Image processing failed");
     } finally {
       setLoadingAI(false);
     }
@@ -339,24 +264,27 @@ export default function ReportIssue() {
     setSuggestions([]);
     setShowSuggestions(false);
     setLocationSource("manual");
-    setLocationAccuracy(null);
     setLocationUnavailable(false);
   };
 
-  // ── Manual GPS override (always available) ──────────────────────────────────
-  const handleManualGPS = async () => {
+  // ── Manual GPS button ───────────────────────────────────────────────────────
+  const handleManualGPS = () => {
     if (!navigator.geolocation) return alert("Geolocation not supported by your browser.");
-    setGpsStatus("Getting your GPS location…");
-    const result = await getAccurateGPS();
-    setGpsStatus(null);
-    if (result) {
-      setLocation(result.address);
-      setLocationSource("gps");
-      setLocationAccuracy(result.accuracy);
-      setLocationUnavailable(false);
-    } else {
-      alert("GPS signal too weak or access denied. Move to open sky and try again, or type your address manually.");
-    }
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        if (pos.coords.accuracy > 200) {
+          return alert(`GPS signal too weak (±${Math.round(pos.coords.accuracy)}m). Move to open sky and try again.`);
+        }
+        const address = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+        if (address) {
+          setLocation(address);
+          setLocationSource("gps");
+          setLocationUnavailable(false);
+        }
+      },
+      () => alert("GPS access denied. Please allow location permissions in your browser settings."),
+      { timeout: 10000, maximumAge: 0, enableHighAccuracy: true }
+    );
   };
 
   // ── Form submit ─────────────────────────────────────────────────────────────
@@ -380,7 +308,7 @@ export default function ReportIssue() {
       if (data.success) setSubmitted(true);
       else alert(data.message);
     } catch (error) {
-      console.error("Submit error:", error);
+      console.error("ERROR:", error);
       alert("Submission failed. Please try again.");
     } finally {
       setLoadingSubmit(false);
@@ -390,9 +318,10 @@ export default function ReportIssue() {
   // ── Reset ───────────────────────────────────────────────────────────────────
   const resetForm = () => {
     setTitle(""); setDesc(""); setLocation(""); setCategory("");
-    setFile(null); setFilePreview(null); setSubmitted(false); setAgreed(false);
-    setImageAnalyzed(false); setLocationSource(null); setLocationAccuracy(null);
-    setLocationUnavailable(false); setGpsStatus(null); setSuggestions([]);
+    setFile(null); setFilePreview(null); setSubmitted(false);
+    setAgreed(false); setImageAnalyzed(false);
+    setLocationSource(null); setLocationUnavailable(false);
+    setSuggestions([]);
   };
 
   // ── Success screen ──────────────────────────────────────────────────────────
@@ -477,9 +406,7 @@ export default function ReportIssue() {
             {/* Info notice */}
             <div className="border border-amber-700/30 bg-amber-900/10 text-amber-200/80 text-[11px] font-mono-gov px-4 py-3 mb-6 leading-relaxed">
               ℹ️ All fields marked <span className="text-amber-500">*</span> are mandatory.
-              For best results,{" "}
-              <strong className="text-amber-400">use the camera to take a photo at the location</strong>{" "}
-              — your exact GPS coordinates will be captured automatically.
+              Start by uploading a photo — category and location will be detected automatically.
               Complaints with photographic evidence are prioritised and resolved faster.
             </div>
 
@@ -490,138 +417,86 @@ export default function ReportIssue() {
                 <div className="border-b border-white/10 px-5 py-3 flex items-center gap-2">
                   <span className="text-amber-400 font-mono-gov font-bold text-[10px] uppercase tracking-widest">01</span>
                   <span className="text-white font-bold text-sm">Upload Evidence</span>
-                  <span className="ml-auto text-[10px] font-mono-gov text-slate-500 hidden sm:block">
-                    Take photo at the location for exact GPS
+                  <span className="ml-auto text-[10px] font-mono-gov text-slate-500">
+                    Category &amp; location detected automatically from your photo
                   </span>
                 </div>
-
                 <div className="p-5 flex flex-col gap-4">
-
-                  {/* Two upload options — shown before any file selected */}
-                  {!file && !loadingAI && (
-                    <div className="grid grid-cols-2 gap-3">
-
-                      {/* Camera capture — recommended */}
-                      <label
-                        htmlFor="camera-capture"
-                        className="flex flex-col items-center justify-center border border-dashed border-amber-600/50 bg-amber-900/5 hover:border-amber-500 hover:bg-amber-900/10 transition cursor-pointer py-8 gap-2"
-                      >
-                        <span className="text-3xl">📸</span>
-                        <span className="text-[13px] font-mono-gov text-amber-300 font-bold">
-                          Take Photo
-                        </span>
-                        <span className="text-[10px] font-mono-gov text-amber-500/60 text-center leading-relaxed px-2">
-                          Opens camera + captures your exact GPS location automatically
-                        </span>
-                        <span className="text-[9px] font-mono-gov text-green-500/80 border border-green-700/30 bg-green-900/10 px-2 py-0.5 mt-1">
-                          ✦ Recommended
-                        </span>
-                      </label>
-                      <input
-                        id="camera-capture"
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        className="hidden"
-                        onChange={(e) => handleFileChange(e, true)}
-                      />
-
-                      {/* Gallery upload */}
-                      <label
-                        htmlFor="gallery-upload"
-                        className="flex flex-col items-center justify-center border border-dashed border-white/10 bg-[#060e1f] hover:border-white/20 hover:bg-white/5 transition cursor-pointer py-8 gap-2"
-                      >
-                        <span className="text-3xl">🖼️</span>
-                        <span className="text-[13px] font-mono-gov text-slate-300 font-bold">
-                          Upload Photo
-                        </span>
-                        <span className="text-[10px] font-mono-gov text-slate-500 text-center leading-relaxed px-2">
-                          From gallery — GPS extracted from image metadata if available
-                        </span>
-                      </label>
-                      <input
-                        id="gallery-upload"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleFileChange(e, false)}
-                      />
-                    </div>
-                  )}
-
-                  {/* Preview / loading state after file selected */}
-                  {file && (
-                    <div className="relative">
-                      <div
-                        className={`flex flex-col items-center justify-center border border-dashed transition ${
-                          loadingAI
-                            ? "border-amber-600/50 bg-amber-900/10 py-10"
-                            : "border-green-600/40 bg-[#060e1f] overflow-hidden py-0"
-                        }`}
-                      >
-                        {filePreview && !loadingAI ? (
-                          <div className="relative w-full">
-                            <img
-                              src={filePreview}
-                              alt="Evidence preview"
-                              className="w-full max-h-64 object-cover"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-                              <span className="text-xs font-mono-gov text-white/90 truncate max-w-[70%]">
-                                {file.name}
-                              </span>
-                              <span className="text-[10px] font-mono-gov text-green-400 border border-green-600/40 bg-green-900/30 px-2 py-0.5">
-                                ✓ Uploaded
-                              </span>
-                            </div>
+                  <div className="relative">
+                    <label
+                      htmlFor="evidence-upload"
+                      className={`flex flex-col items-center justify-center border border-dashed transition cursor-pointer gap-2 ${
+                        loadingAI
+                          ? "border-amber-600/50 bg-amber-900/10"
+                          : file
+                          ? "border-green-600/40 bg-[#060e1f] hover:border-green-500/60"
+                          : "border-amber-700/30 bg-[#060e1f] hover:border-amber-600/60 hover:bg-amber-600/5"
+                      } ${filePreview ? "py-0 overflow-hidden" : "py-10"}`}
+                    >
+                      {filePreview && !loadingAI ? (
+                        <div className="relative w-full">
+                          <img
+                            src={filePreview}
+                            alt="Evidence preview"
+                            className="w-full max-h-64 object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                          <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+                            <span className="text-xs font-mono-gov text-white/90 truncate max-w-[70%]">
+                              {file.name}
+                            </span>
+                            <span className="text-[10px] font-mono-gov text-green-400 border border-green-600/40 bg-green-900/30 px-2 py-0.5">
+                              ✓ Uploaded
+                            </span>
                           </div>
-                        ) : (
-                          <div className="flex flex-col items-center gap-3">
-                            <div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-                            <p className="text-sm text-amber-400 font-mono-gov">
-                              {gpsStatus || "Analysing image with AI…"}
-                            </p>
-                            <p className="text-[10px] text-slate-500 font-mono-gov">
-                              Detecting category and capturing location
-                            </p>
+                        </div>
+                      ) : loadingAI ? (
+                        <div className="py-10 flex flex-col items-center gap-3">
+                          <div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                          <p className="text-sm text-amber-400 font-mono-gov">Analysing image with AI…</p>
+                          <p className="text-[10px] text-slate-500 font-mono-gov">
+                            Detecting category and extracting location
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <span className="text-4xl">📷</span>
+                          <span className="text-sm font-mono-gov text-slate-300 font-bold">
+                            Click to upload photograph
+                          </span>
+                          <span className="text-[10px] font-mono-gov text-slate-500">
+                            JPG, PNG up to 5MB — AI will auto-detect category &amp; location
+                          </span>
+                          <div className="flex items-center gap-4 mt-2">
+                            {["🏷️ Category", "📍 Location"].map((tag) => (
+                              <span
+                                key={tag}
+                                className="text-[10px] font-mono-gov text-amber-500/70 border border-amber-700/30 px-2 py-1"
+                              >
+                                {tag} auto-filled
+                              </span>
+                            ))}
                           </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                        </>
+                      )}
+                    </label>
+                    <input
+                      id="evidence-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={loadingAI}
+                      onChange={handleFileChange}
+                    />
+                  </div>
 
-                  {/* Change photo controls */}
                   {file && !loadingAI && (
-                    <div className="flex gap-6 justify-center">
-                      <label
-                        htmlFor="camera-capture-redo"
-                        className="text-[10px] font-mono-gov text-amber-500 hover:text-amber-400 cursor-pointer transition underline underline-offset-2"
-                      >
-                        📸 Retake with Camera
-                      </label>
-                      <input
-                        id="camera-capture-redo"
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        className="hidden"
-                        onChange={(e) => handleFileChange(e, true)}
-                      />
-                      <label
-                        htmlFor="gallery-upload-redo"
-                        className="text-[10px] font-mono-gov text-slate-500 hover:text-slate-300 cursor-pointer transition underline underline-offset-2"
-                      >
-                        🖼️ Change from Gallery
-                      </label>
-                      <input
-                        id="gallery-upload-redo"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleFileChange(e, false)}
-                      />
-                    </div>
+                    <label
+                      htmlFor="evidence-upload"
+                      className="text-center text-[10px] font-mono-gov text-slate-500 hover:text-amber-400 cursor-pointer transition underline underline-offset-2"
+                    >
+                      ↺ Change photo
+                    </label>
                   )}
                 </div>
               </div>
@@ -648,7 +523,7 @@ export default function ReportIssue() {
                 </div>
                 <div className="p-5 flex flex-col gap-5">
 
-                  {/* AI Category */}
+                  {/* AI-detected Category */}
                   <div>
                     <label className="text-[10px] font-mono-gov text-slate-500 uppercase tracking-widest block mb-1.5">
                       Issue Category <span className="text-amber-500">*</span>
@@ -684,42 +559,25 @@ export default function ReportIssue() {
                     <label className="text-[10px] font-mono-gov text-slate-500 uppercase tracking-widest block mb-1.5">
                       Location / Address <span className="text-amber-500">*</span>
                       {locationSource === "exif" && (
-                        <span className="ml-2 text-green-500 normal-case">— from image GPS metadata</span>
-                      )}
-                      {locationSource === "gps" && locationAccuracy && (
-                        <span className="ml-2 text-blue-400 normal-case">
-                          — GPS ±{locationAccuracy}m
+                        <span className="ml-2 text-green-500 normal-case">
+                          — from image GPS metadata
                         </span>
                       )}
-                      {locationSource === "gps" && !locationAccuracy && (
-                        <span className="ml-2 text-blue-400 normal-case">— from device GPS</span>
+                      {locationSource === "gps" && (
+                        <span className="ml-2 text-blue-400 normal-case">
+                          — from device GPS
+                        </span>
                       )}
                     </label>
 
-                    {/* Loading state */}
                     {loadingAI ? (
-                      <div
-                        className={`w-full px-4 py-3 border flex items-center gap-3 ${
-                          gpsStatus
-                            ? "bg-[#060e1f] border-blue-600/40"
-                            : "bg-[#060e1f] border-amber-600/40"
-                        }`}
-                      >
-                        <div
-                          className={`w-4 h-4 border-2 border-t-transparent rounded-full animate-spin shrink-0 ${
-                            gpsStatus ? "border-blue-400" : "border-amber-500"
-                          }`}
-                        />
-                        <span
-                          className={`text-sm font-mono-gov ${
-                            gpsStatus ? "text-blue-300" : "text-amber-400"
-                          }`}
-                        >
-                          {gpsStatus || "Detecting location…"}
+                      <div className="w-full px-4 py-3 bg-[#060e1f] border border-amber-600/40 flex items-center gap-3">
+                        <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin shrink-0" />
+                        <span className="text-amber-400 text-sm font-mono-gov">
+                          Detecting location from image…
                         </span>
                       </div>
                     ) : (
-                      /* Input + GPS button + autocomplete */
                       <div className="relative">
                         <div className="flex gap-2">
                           <input
@@ -740,9 +598,10 @@ export default function ReportIssue() {
                                 : "border-white/10 focus:border-amber-600/60"
                             }`}
                           />
+                          {/* Manual GPS override button */}
                           <button
                             type="button"
-                            title="Get current GPS location"
+                            title="Use current device GPS"
                             onClick={handleManualGPS}
                             className="px-4 py-3 border border-amber-700/40 text-amber-400 hover:bg-amber-600/10 transition text-[10px] font-mono-gov uppercase tracking-wide whitespace-nowrap"
                           >
@@ -752,7 +611,7 @@ export default function ReportIssue() {
 
                         {/* Autocomplete dropdown */}
                         {showSuggestions && suggestions.length > 0 && (
-                          <div className="absolute z-50 top-full left-0 right-12 bg-[#0a1628] border border-white/10 shadow-2xl mt-0.5 max-h-60 overflow-y-auto">
+                          <div className="absolute z-50 top-full left-0 right-12 bg-[#0a1628] border border-white/10 shadow-2xl mt-0.5 max-h-64 overflow-y-auto">
                             {suggestions.map((s, i) => (
                               <button
                                 key={i}
@@ -772,7 +631,7 @@ export default function ReportIssue() {
                       </div>
                     )}
 
-                    {/* Status notes below field */}
+                    {/* Status notes */}
                     {!loadingAI && (
                       <div className="mt-2">
                         {locationSource === "exif" && (
@@ -784,28 +643,23 @@ export default function ReportIssue() {
                         {locationSource === "gps" && (
                           <p className="text-[10px] text-blue-400 font-mono-gov flex items-center gap-1.5">
                             <span>✦</span>
-                            {locationAccuracy && locationAccuracy <= 50
-                              ? `Exact GPS location captured (±${locationAccuracy}m) — street-level precision`
-                              : locationAccuracy
-                              ? `GPS location captured (±${locationAccuracy}m) — verify it looks correct`
-                              : "Location captured from your device GPS — verify it looks correct"}
+                            Address detected from your device GPS — verify it looks correct before submitting
                           </p>
                         )}
                         {locationUnavailable && (
-                          <div className="border border-amber-700/40 bg-amber-900/10 px-3 py-3 mt-1">
+                          <div className="border border-amber-700/40 bg-amber-900/10 px-3 py-2.5 mt-1">
                             <p className="text-[11px] text-amber-300 font-mono-gov font-bold mb-1">
                               ⚠️ Automatic location unavailable
                             </p>
                             <p className="text-[10px] text-amber-200/70 font-mono-gov leading-relaxed">
                               We could not detect your location automatically — the photo has no GPS
                               metadata and your device GPS is either unavailable or too imprecise.
-                              Please type the full address, locality, or landmark in the field above.
-                              Autocomplete suggestions will appear as you type.
+                              Please type the full address, locality, or landmark name in the field
+                              above. Autocomplete suggestions will appear as you type. A precise
+                              address helps the authorities locate and resolve the issue faster.
                             </p>
-                            <p className="text-[10px] text-amber-500/60 font-mono-gov mt-2">
-                              💡 For automatic location next time, use{" "}
-                              <strong className="text-amber-400">Take Photo</strong> while standing
-                              at the issue site in open sky for best GPS signal.
+                            <p className="text-[10px] text-amber-500/60 font-mono-gov mt-1.5">
+                              Tip: You can also tap the 📍 GPS button to try again in open sky.
                             </p>
                           </div>
                         )}
@@ -851,6 +705,7 @@ export default function ReportIssue() {
                       {title.length}/100 characters
                     </p>
                   </div>
+
                   <div>
                     <label className="text-[10px] font-mono-gov text-slate-500 uppercase tracking-widest block mb-1.5">
                       Detailed Description <span className="text-amber-500">*</span>
@@ -910,7 +765,7 @@ export default function ReportIssue() {
                 }`}
               >
                 {loadingAI
-                  ? "Processing…"
+                  ? "Processing Image…"
                   : !file
                   ? "Upload an Image to Continue"
                   : loadingSubmit
