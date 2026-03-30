@@ -2016,45 +2016,6 @@ export default function ReportIssue() {
   //     setLoadingAI(false);
   //   }
   // };
-  // ── Image Compressor ─────────────────────────────────────────────────────
-const compressImage = (file, maxSizeMB = 1) =>
-  new Promise((resolve) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      let { width, height } = img;
-
-      // Scale down if too large
-      const maxDim = 1920;
-      if (width > maxDim || height > maxDim) {
-        if (width > height) { height = (height / width) * maxDim; width = maxDim; }
-        else { width = (width / height) * maxDim; height = maxDim; }
-      }
-
-      canvas.width = width;
-      canvas.height = height;
-      canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-
-      // Try quality 0.8 first, reduce if still too big
-      const tryCompress = (quality) => {
-        canvas.toBlob(
-          (blob) => {
-            if (blob.size > maxSizeMB * 1024 * 1024 && quality > 0.3) {
-              tryCompress(quality - 0.1);
-            } else {
-              resolve(new File([blob], file.name, { type: "image/jpeg" }));
-            }
-          },
-          "image/jpeg",
-          quality
-        );
-      };
-      tryCompress(0.8);
-      URL.revokeObjectURL(url);
-    };
-    img.src = url;
-  });
   const handleFileChange = async (e) => {
   const selectedFile = e.target.files[0];
   if (!selectedFile) return;
@@ -2074,9 +2035,8 @@ const compressImage = (file, maxSizeMB = 1) =>
     const [gpsResult, classifyData] = await Promise.all([
       extractGPS(selectedFile),
       (async () => {
-        const compressed = await compressImage(selectedFile);
         const fd = new FormData();
-        fd.append("image", compressed);
+        fd.append("image", selectedFile);
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/classify`, {
           method: "POST", body: fd,
         });
