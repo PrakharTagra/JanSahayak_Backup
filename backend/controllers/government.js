@@ -156,7 +156,7 @@ exports.assignTask = async (req, res) => {
         }
 
         // ← CHANGED: allow re-assign only if still pending (not inProgress)
-        if (complaint.status === "inProgress" || complaint.status === "resolved") {
+        if (complaint.status === "resolved") {
             return res.status(400).json({
                 success: false,
                 message: `Cannot assign — complaint is already ${complaint.status}`,
@@ -214,7 +214,7 @@ exports.updateComplaintStatus = async (req, res) => {
         const { id } = req.params;
         const { status } = req.body;
 
-        const validStatuses = ["pending", "assigned", "inProgress", "resolved"];
+        const validStatuses = ["pending", "assigned", "resolved"];
         if (!validStatuses.includes(status)) {
             return res.status(400).json({
                 success: false,
@@ -271,7 +271,6 @@ exports.getDashboardStats = async (req, res) => {
             totalComplaints,
             pendingComplaints,
             assignedComplaints,
-            inProgressComplaints,
             resolvedComplaints,
             totalVolunteers,
             availableVolunteers,
@@ -280,7 +279,6 @@ exports.getDashboardStats = async (req, res) => {
             Complaint.countDocuments(),
             Complaint.countDocuments({ status: "pending" }),
             Complaint.countDocuments({ status: "assigned" }),
-            Complaint.countDocuments({ status: "inProgress" }),
             Complaint.countDocuments({ status: "resolved" }),
             User.countDocuments({ isVolunteer: true }),
             User.countDocuments({ isVolunteer: true, "volunteerDetails.isAvailable": true }),
@@ -296,7 +294,6 @@ exports.getDashboardStats = async (req, res) => {
                 totalComplaints,
                 pendingComplaints,
                 assignedComplaints,
-                inProgressComplaints,
                 resolvedComplaints,
                 totalVolunteers,
                 availableVolunteers,

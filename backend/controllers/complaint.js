@@ -144,7 +144,7 @@ exports.updateComplaintStatus = async (req, res) => {
         }
 
         // ← ADDED: validate status value
-        const validStatuses = ["pending", "assigned", "inProgress", "resolved"];
+        const validStatuses = ["pending", "assigned", "resolved"];
         if (!validStatuses.includes(status)) {
             return res.status(400).json({
                 success: false,

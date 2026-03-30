@@ -354,7 +354,6 @@ export default function Feed() {
   const statusColor = {
     pending:    "text-slate-400 bg-slate-800 border-slate-700",
     resolved:   "text-green-400 bg-green-900/30 border-green-700/40",
-    inProgress: "text-amber-400 bg-amber-900/30 border-amber-700/40",
   };
 
   const timeAgo = (dateStr) => {
